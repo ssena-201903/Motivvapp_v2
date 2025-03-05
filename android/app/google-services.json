@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "917230438716",
+    "project_id": "motivapp-dde03",
+    "storage_bucket": "motivapp-dde03.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:917230438716:android:1840ea0634f199aab9b639",
+        "android_client_info": {
+          "package_name": "com.company.MotivApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJ3wnXBH79HM2yKIsahsjjdeWraxb1BcA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

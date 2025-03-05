@@ -1,0 +1,28 @@
+buildscript {
+    plugins {
+        id("com.google.gms.google-services") version "4.4.2" apply false
+        id("com.android.application")
+    }
+    ext {
+        buildToolsVersion = "35.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 35
+        targetSdkVersion = 34
+        ndkVersion = "26.1.10909125"
+        kotlinVersion = "1.9.24"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+        implementation("com.google.firebase:firebase-analytics")
+        classpath 'com.google.gms:google-services:4.4.2'
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"
