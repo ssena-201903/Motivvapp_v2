@@ -74,3 +74,6 @@ todo
 
 #search movie
 SearchMovie.tsx
+
+#security
+security_rules.txt
