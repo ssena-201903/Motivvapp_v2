@@ -71,3 +71,6 @@ assets
 
 #todo
 todo
+
+#search movie
+SearchMovie.tsx
