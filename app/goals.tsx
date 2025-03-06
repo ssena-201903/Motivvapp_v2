@@ -194,7 +194,8 @@ export default function Goals() {
           
           <View style={styles.headerContainer}>
             <SectionHeader
-              text={getSectionHeaderText()}
+              id={activeCategory}
+              text={getSectionHeaderText() ?? ""}
               percentDone={calculatePercentDone(activeCategory)}
               variant="other"
             />
