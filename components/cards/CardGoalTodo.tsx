@@ -182,151 +182,177 @@ export default function CardGoalTodo({
   const handleAdvicePress = (event: any) => {
     event.stopPropagation();
     setIsFriendsModalVisible(true);
-  }
+  };
+
+  const handleDetailsPress = (event: any) => {
+    event.stopPropagation();
+    setIsDetailsModalVisible(true);
+  };
 
   return (
-    <Pressable
-      style={[styles.container, isDone && styles.completedContainer]}
-      onPress={handleCardPress}
-    >
-      {/* Movie poster */}
-      {category === "Movie" && (
-        <Image
-          source={
-            goal.posterUrl
-              ? { uri: goal.posterUrl }
-              : require("@/assets/images/logo.png")
-          }
-          style={styles.poster}
-        />
-      )}
+    <View style={[styles.mainContainer, isDone && styles.completedContainer]}>
+      <View style={styles.container}>
+        {/* Movie poster */}
+        {category === "Movie" && (
+          <Image
+            source={
+              goal.posterUrl
+                ? { uri: goal.posterUrl }
+                : require("@/assets/images/logo.png")
+            }
+            style={styles.poster}
+          />
+        )}
 
-      <View style={styles.contentContainer}>
-        {/* Top section: Title + Actions */}
-        <View style={styles.topSection}>
-          <View style={styles.titleWrapper}>
-            <CustomText
-              style={styles.titleText}
-              color="#1E3A5F"
-              fontSize={16}
-              type="bold"
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {goal.name}
-            </CustomText>
-            {category === "Movie" && (
+        <View style={styles.contentContainer}>
+          {/* Top section: Title + Actions */}
+          <View style={styles.topSection}>
+            <View style={styles.titleWrapper}>
               <CustomText
-                style={styles.infoText}
-                color="#666"
-                fontSize={12}
-                type="regular"
+                style={styles.titleText}
+                color="#1E3A5F"
+                fontSize={16}
+                type="bold"
+                numberOfLines={1}
+                ellipsizeMode="tail"
               >
-                IMDB: {goal.imdbRate} / {goal.runtime}
+                {goal.name}
               </CustomText>
-            )}
-            {category === "Book" && (
-              <Pressable style={styles.infoSection} onPress={handlePickerPress}>
-                <Picker
-                  selectedValue={selectedStatus}
-                  onValueChange={(value) => {
-                    handleReadingStatusChange(value);
-                  }}
-                  style={styles.picker}
-                  dropdownIconColor="#1E3A5F"
-                >
-                  <Picker.Item
-                    label={t("cardGoalTodo.notStartedStatus")}
-                    value="not started"
-                  />
-                  <Picker.Item
-                    label={t("cardGoalTodo.readingStatus")}
-                    value="reading"
-                  />
-                  <Picker.Item
-                    label={t("cardGoalTodo.completedStatus")}
-                    value="read"
-                  />
-                </Picker>
-              </Pressable>
-            )}
-          </View>
-
-          <View style={styles.actionsContainer}>
-            <Pressable style={styles.actionButton} onPress={handleAddNote}>
-              <PlusIcon size={12} color="#1E3A5F" />
-              {width >= 340 && (
+              {category === "Movie" && (
                 <CustomText
-                  style={styles.actionText}
+                  style={styles.infoText}
                   color="#666"
-                  fontSize={14}
-                  type="medium"
+                  fontSize={12}
+                  type="regular"
                 >
-                  {t("cardGoalTodo.addNote")}
+                  IMDB: {goal.imdbRate} / {goal.runtime}
                 </CustomText>
               )}
-            </Pressable>
-
-            <Pressable
-              style={styles.checkboxButton}
-              onPress={handleCheckboxPress}
-            >
-              {isDone ? (
-                <BoxIcon size={20} color="#1E3A5F" variant="fill" />
-              ) : (
-                <BoxIcon size={20} color="#1E3A5F" variant="outlined" />
+              {category === "Book" && (
+                <Pressable
+                  style={styles.infoSection}
+                  onPress={handlePickerPress}
+                >
+                  <Picker
+                    selectedValue={selectedStatus}
+                    onValueChange={(value) => {
+                      handleReadingStatusChange(value);
+                    }}
+                    style={styles.picker}
+                    dropdownIconColor="#1E3A5F"
+                  >
+                    <Picker.Item
+                      label={t("cardGoalTodo.notStartedStatus")}
+                      value="not started"
+                    />
+                    <Picker.Item
+                      label={t("cardGoalTodo.readingStatus")}
+                      value="reading"
+                    />
+                    <Picker.Item
+                      label={t("cardGoalTodo.completedStatus")}
+                      value="read"
+                    />
+                  </Picker>
+                </Pressable>
               )}
-            </Pressable>
-          </View>
-        </View>
+            </View>
 
-        {/* Bottom section: Status/Info + Rating/Icons */}
-        <View style={styles.bottomSection}>
-          {/* Rating and action icons */}
-          <View style={styles.ratingSection}>
-            <Pressable onPress={(event) => event.stopPropagation()}>
-              <StarRating
-                rating={goal.rating}
-                onRatingChange={handleRatingChange}
-              />
-            </Pressable>
+            <View style={styles.actionsContainer}>
+              <Pressable
+                style={styles.checkboxButton}
+                onPress={handleCheckboxPress}
+              >
+                {isDone ? (
+                  <BoxIcon size={20} color="#1E3A5F" variant="fill" />
+                ) : (
+                  <BoxIcon size={20} color="#1E3A5F" variant="outlined" />
+                )}
+              </Pressable>
+            </View>
           </View>
 
-          <View style={styles.iconsContainer}>
-            {/* Edit button for non-Movie categories */}
-            {category !== "Movie" && (
+          {/* Middle section: Rating */}
+          <View style={styles.middleSection}>
+            <View style={styles.ratingSection}>
+              <Pressable onPress={(event) => event.stopPropagation()}>
+                <StarRating
+                  rating={goal.rating}
+                  onRatingChange={handleRatingChange}
+                />
+              </Pressable>
+            </View>
+
+            <View style={styles.iconsContainer}>
+              {/* Edit button for non-Movie categories */}
+              {category !== "Movie" && (
+                <Pressable
+                  style={styles.actionButton}
+                  onPress={handleEditButtonPress}
+                >
+                  <PencilIcon size={14} color="#1E3A5F" />
+                  {/* <CustomText
+                    style={styles.actionText}
+                    color="#666"
+                    fontSize={14}
+                    type="medium"
+                  >
+                    Düzenle
+                  </CustomText> */}
+                </Pressable>
+              )}
+
+              {/* Delete button */}
               <Pressable
                 style={styles.actionButton}
-                onPress={handleEditButtonPress}
+                onPress={handleDeleteButtonPress}
               >
-                <PencilIcon size={14} color="#1E3A5F" />
-                <CustomText
-                  style={styles.actionText}
-                  color="#666"
-                  fontSize={14}
-                  type="medium"
-                >
-                  Düzenle
-                </CustomText>
+                <TrashIcon size={20} color="#1E3A5F" />
               </Pressable>
-            )}
 
-            <Pressable
-              style={styles.iconButton}
-              onPress={handleAdvicePress}
-            >
-              <ThumbsUpIcon size={20} color="#1E3A5F" variant="outlined" />
-            </Pressable>
-
-            {/* Delete button */}
-            <Pressable
-              style={styles.iconButton}
-              onPress={handleDeleteButtonPress}
-            >
-              <TrashIcon size={20} color="#FF6347" />
-            </Pressable>
+              <Pressable style={styles.addNote} onPress={handleAddNote}>
+                <PlusIcon size={12} color="#fff" />
+                {width >= 340 && (
+                  <CustomText
+                    style={styles.actionText}
+                    color="#fff"
+                    fontSize={14}
+                    type="regular"
+                  >
+                    {t("cardGoalTodo.addNote")}
+                  </CustomText>
+                )}
+              </Pressable>
+            </View>
           </View>
         </View>
+      </View>
+
+      {/* Bottom Button Container - Yeni eklenen kısım */}
+      <View style={styles.buttonContainer}>
+        <Pressable style={styles.detailsButton} onPress={handleDetailsPress}>
+          <InfoIcon size={16} color="#1E3A5F" />
+          <CustomText
+            style={styles.buttonText}
+            color="#1E3A5F"
+            fontSize={14}
+            type="medium"
+          >
+            Detaylar
+          </CustomText>
+        </Pressable>
+
+        <Pressable style={styles.recommendButton} onPress={handleAdvicePress}>
+          <ThumbsUpIcon size={16} color="#1E3A5F" variant="outlined" />
+          <CustomText
+            style={styles.buttonText}
+            color="#1E3A5F"
+            fontSize={14}
+            type="medium"
+          >
+            Tavsiye Et
+          </CustomText>
+        </Pressable>
       </View>
 
       {/* Modals */}
@@ -365,24 +391,22 @@ export default function CardGoalTodo({
 
       <FriendsListModal
         isFriendsModalVisible={isFriendsModalVisible}
-        onClose={() => {setIsFriendsModalVisible(false)}}
+        onClose={() => {
+          setIsFriendsModalVisible(false);
+        }}
         goal={goal}
       />
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    marginBottom: 8,
+  mainContainer: {
     width: width > 768 ? width - 900 : width - 40,
-    minHeight: 100,
     backgroundColor: "white",
     borderRadius: 8,
-    padding: 15,
+    borderWidth: 1,
+    borderColor: "#E8EFF5",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -391,9 +415,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    marginBottom: 8,
+    overflow: "hidden",
   },
   completedContainer: {
     backgroundColor: "#E5EEFF",
+    borderColor: "#CEDEEB",
+  },
+  container: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+    padding: 15,
   },
   poster: {
     width: 60,
@@ -404,19 +437,19 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     justifyContent: "space-between",
-    marginLeft: 10,
   },
   topSection: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 10,
+    flexWrap: "wrap",
   },
   titleWrapper: {
     flex: 1,
     paddingRight: 10,
     gap: 2,
-    width: "50%",
+    minWidth: "50%",
   },
   titleText: {
     flex: 1,
@@ -425,16 +458,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    width: "50%",
+    marginTop: width < 380 ? 10 : 0,
   },
-  actionButton: {
+  addNote: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 12,
+    justifyContent: "center",
+    backgroundColor: "#1E3A5F",
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
+  },
+  actionButton: {
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "#E5EEFF",
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   actionText: {
     marginLeft: 8,
@@ -442,11 +493,12 @@ const styles = StyleSheet.create({
   checkboxButton: {
     padding: 5,
   },
-  bottomSection: {
+  middleSection: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "center",
     marginTop: 5,
+    flexWrap: "wrap",
   },
   infoSection: {
     flexDirection: "row",
@@ -470,6 +522,7 @@ const styles = StyleSheet.create({
   ratingSection: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: width < 380 ? 10 : 0,
   },
   iconsContainer: {
     display: "flex",
@@ -481,5 +534,31 @@ const styles = StyleSheet.create({
   iconButton: {
     marginLeft: 10,
     opacity: 0.7,
+  },
+  // Yeni eklenen button container stilleri
+  buttonContainer: {
+    flexDirection: "row",
+    width: "100%",
+    borderTopWidth: 1,
+    borderTopColor: "#E8EFF5",
+  },
+  detailsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "50%",
+    paddingVertical: 12,
+    borderRightWidth: 1,
+    borderRightColor: "#E8EFF5",
+  },
+  recommendButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "50%",
+    paddingVertical: 12,
+  },
+  buttonText: {
+    marginLeft: 8,
   },
 });

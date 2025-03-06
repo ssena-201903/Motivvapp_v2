@@ -1,8 +1,10 @@
 import { useEffect } from "react";
-import { View, StyleSheet, Dimensions, Modal } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native";
+import Modal from "react-native-modal";
 import { Audio } from "expo-av";
 import Lottie from "lottie-react-native";
 import { CustomText } from "@/CustomText";
+import { FadeIn } from "react-native-reanimated";
 
 type Props = {
   isVisible: boolean;
@@ -37,9 +39,12 @@ export default function CardFeedback({
     const sound = new Audio.Sound();
     try {
       let soundSource;
-      if (type === "celebration") soundSource = require("@/assets/sounds/success-1-6297.mp3");
-      else if (type === "success") soundSource = require("@/assets/sounds/success-1-6297.mp3");
-      else if (type === "warning") soundSource = require("@/assets/sounds/success-1-6297.mp3");
+      if (type === "celebration")
+        soundSource = require("@/assets/sounds/success-1-6297.mp3");
+      else if (type === "success")
+        soundSource = require("@/assets/sounds/success-1-6297.mp3");
+      else if (type === "warning")
+        soundSource = require("@/assets/sounds/success-1-6297.mp3");
       else return;
 
       await sound.loadAsync(soundSource);
@@ -52,7 +57,12 @@ export default function CardFeedback({
   if (!isVisible) return null;
 
   return (
-    <Modal visible={isVisible} transparent animationType="fade">
+    <Modal
+      isVisible={isVisible}
+      animationIn={"fadeIn"}
+      animationOut={"fadeOut"}
+      backdropColor="rgba(0, 0, 0, 0.8)"
+    >
       <View style={styles.overlay}>
         <View style={styles.messageCard}>
           <View style={styles.animationContainer}>
@@ -63,7 +73,7 @@ export default function CardFeedback({
               style={styles.animation}
             />
           </View>
-          <CustomText 
+          <CustomText
             style={styles.messageText}
             color="#1E3A5F"
             fontSize={16}
@@ -80,7 +90,6 @@ export default function CardFeedback({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -103,13 +112,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 60,
     height: 400,
-    backgroundColor: "#EFF4FF",
-    borderRadius: 12,
+    backgroundColor: "#FDFDFD",
+    borderRadius: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   messageText: {
     marginTop: 20,

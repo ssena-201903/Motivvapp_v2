@@ -6,7 +6,7 @@ const { width } = Dimensions.get("window");
 export default function DailyText () {
   return (
     <View style={styles.container}>
-      <StarIcon width={20} height={20} />
+      <StarIcon size={16} color={"#264653"} variant={"fill"}  />
       <Text style={styles.text}>
         “What you do today, shapes tomorrow’s success”
       </Text>

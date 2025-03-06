@@ -62,7 +62,9 @@ export default function FriendCard({ item, type, onAction }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#FDFDFD",
+    borderWidth: 1,
+    borderColor: "#E8EFF5",
     borderRadius: 8,
     padding: 15,
     width: "100%",
