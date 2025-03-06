@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import {
-  Modal,
   View,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
   Dimensions,
 } from "react-native";
+
+import Modal from "react-native-modal";
+
 import { CustomText } from "@/CustomText";
 import CustomButton from "../CustomButton";
 import { db } from "@/firebase.config";
@@ -33,7 +34,6 @@ export default function AddTodoModal({
   userId,
 }: AddTodoModalProps) {
   const [todoText, setTodoText] = useState<string>("");
-  const [showRefreshModal, setShowRefreshModal] = useState<boolean>(false);
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -58,7 +58,6 @@ export default function AddTodoModal({
 
         setTodoText("");
         onClose();
-        setShowRefreshModal(true);
       } catch (error) {
         console.error("Error adding document: ", error);
       }
@@ -69,12 +68,12 @@ export default function AddTodoModal({
     <>
       {/* add todo modal */}
       <Modal
-        visible={visible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={onClose}
+        isVisible={visible}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        backdropColor="rgba(0, 0, 0, 0.8)"
       >
-        <View style={styles.modalContainer}>
+        <View style={styles.overlay}>
           <View style={styles.modalContent}>
             <CustomText color="#1E3A5F" fontSize={18} type="bold">
               {selectedDate ? `${selectedDate}` : t("addTodoModal.title")}
@@ -106,39 +105,15 @@ export default function AddTodoModal({
           </View>
         </View>
       </Modal>
-
-      {/* refresh screen modal */}
-      <Modal visible={showRefreshModal} transparent={true} animationType="fade">
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, styles.refreshModalContent]}>
-            <CustomText style={styles.refreshModalHeader}>
-              Added successfully! Refresh to continue
-            </CustomText>
-            <TouchableOpacity
-              style={styles.refreshButton}
-              onPress={() => {
-                setShowRefreshModal(false);
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: route.name }],
-                });
-              }}
-            >
-              <Ionicons name="refresh" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  overlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
     backgroundColor: "#FCFCFC",
@@ -164,27 +139,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 20,
-  },
-  // refresh screen
-  refreshModalContent: {
-    justifyContent: "center",
-    alignItems: "center",
-    height: 180,
-    width: "80%",
-  },
-  refreshModalHeader: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#264653",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  refreshButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#264653",
-    justifyContent: "center",
-    alignItems: "center",
   },
 });

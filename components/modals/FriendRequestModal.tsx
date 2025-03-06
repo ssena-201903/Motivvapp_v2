@@ -1,6 +1,7 @@
 import { CustomText } from "@/CustomText";
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Modal, TouchableOpacity, Dimensions } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import Modal from "react-native-modal";
 import CloseIcon from "../icons/CloseIcon";
 import InputField from "../cards/InputField";
 import CustomButton from "../CustomButton";
@@ -14,7 +15,7 @@ import {
   where,
   getDocs,
   serverTimestamp,
-  addDoc
+  addDoc,
 } from "firebase/firestore";
 
 const { width } = Dimensions.get("window");
@@ -103,29 +104,30 @@ export default function FriendRequestModal({ visible, onClose }: Props) {
         receiverId: receiverUser.id,
         receiverNickname: nickname.trim(),
         status: "pending",
-        createdAt: serverTimestamp(), 
+        createdAt: serverTimestamp(),
       });
 
       showMessage({
         message: "İstek gönderildi!",
         type: "success",
-      })
+      });
       setNickname("");
       onClose();
     } catch (error) {
       showMessage({
         message: "İstek gönderilirken hata oluştu!",
         type: "danger",
-      })
+      });
     }
   };
 
   return (
     <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)"
+      onBackdropPress={onClose}
     >
       <View style={styles.overlay}>
         <View style={styles.container}>
@@ -163,7 +165,6 @@ export default function FriendRequestModal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
     justifyContent: "center",
     alignItems: "center",
   },

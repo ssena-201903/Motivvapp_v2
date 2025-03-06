@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Modal,
   View,
   StyleSheet,
   Pressable,
@@ -8,6 +7,9 @@ import {
   FlatList,
   Image,
 } from "react-native";
+
+import Modal from "react-native-modal";
+
 import { CustomText } from "@/CustomText"; // Özel metin bileşenin
 import InfoIcon from "../icons/InfoIcon"; // Bilgi ikonu bileşenin
 import { Timestamp } from "firebase/firestore";
@@ -39,14 +41,15 @@ export default function GoalDetailsModal({
   isPrivate,
   isNotesVisible,
 }: GoalDetailsModalProps) {
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <Modal
-      transparent
-      animationType="fade"
-      visible={visible}
-      onRequestClose={onClose}
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)" 
+      onBackdropPress={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <View style={styles.modalContent}>
@@ -269,6 +272,23 @@ export default function GoalDetailsModal({
               </View>
             )}
 
+            {/* Comments */}
+            {!isPrivate && (
+              <View style={styles.detailComment}>
+                <CustomText
+                  style={styles.detailLabel}
+                  color="#1E3A5F"
+                  fontSize={16}
+                  type="semibold"
+                >
+                  {goal.senderNickname} {t("goalDetails.comment")}
+                </CustomText>
+                <CustomText type="medium" color="#333" fontSize={14}>
+                  {goal.comment}
+                </CustomText>
+              </View>
+            )}
+
             {/* Notes List */}
             {!isNotesVisible && (
               <>
@@ -318,7 +338,6 @@ export default function GoalDetailsModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -348,6 +367,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     // marginBottom: 15,
+  },
+  detailComment: {
+    flexDirection: "column",
+    gap: 10,
   },
   detailItem: {
     flexDirection: "row",

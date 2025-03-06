@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import {
-  Modal,
   View,
   TextInput,
   TouchableWithoutFeedback,
   StyleSheet,
-  Text,
   TouchableOpacity,
   Dimensions,
+  Pressable,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+
+import Modal from "react-native-modal";
+
 import CustomButton from "../CustomButton";
 import { db } from "@/firebase.config";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -60,49 +61,46 @@ export default function AddMemoryModal({
 
   return (
     <Modal
-      transparent={true}
-      visible={visible}
-      animationType="fade"
-      onRequestClose={onClose}
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)"
+      onBackdropPress={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalContent}>
-              <View style={styles.topMemoryCard}>
-                <SparklesIcon size={20} color="#1E3A5F" variant="fill" />
-                <CustomText
-                  style={styles.headerMemoryCard}
-                  type="semibold"
-                  fontSize={18}
-                  color="#1E3A5F"
-                >
-                  {t("addMemoryModal.title")}
-                </CustomText>
-              </View>
-              <CustomText style={styles.textMemoryCard}>
-                {t("addMemoryModal.subTitle")}
+      <View style={styles.overlay} pointerEvents="box-none">
+          <View style={styles.modalContent}>
+            <View style={styles.topMemoryCard}>
+              <SparklesIcon size={20} color="#1E3A5F" variant="fill" />
+              <CustomText
+                style={styles.headerMemoryCard}
+                type="semibold"
+                fontSize={18}
+                color="#1E3A5F"
+              >
+                {t("addMemoryModal.title")}
               </CustomText>
-              <TextInput
-                style={styles.textInput}
-                placeholder={t("addMemoryModal.memoryPlaceholder")}
-                value={memoryText}
-                onChangeText={setMemoryText}
-                multiline={true}
-              />
-              <TouchableOpacity style={styles.modelButton}>
-                <CustomButton
-                  label={t("addMemoryModal.saveButtonText")}
-                  onPress={handleSaveMemory}
-                  variant="fill"
-                  width="30%"
-                  height={45}
-                />
-              </TouchableOpacity>
             </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+            <CustomText style={styles.textMemoryCard}>
+              {t("addMemoryModal.subTitle")}
+            </CustomText>
+            <TextInput
+              style={styles.textInput}
+              placeholder={t("addMemoryModal.memoryPlaceholder")}
+              value={memoryText}
+              onChangeText={setMemoryText}
+              multiline={true}
+            />
+            <Pressable style={styles.modelButton}>
+              <CustomButton
+                label={t("addMemoryModal.saveButtonText")}
+                onPress={handleSaveMemory}
+                variant="fill"
+                width="30%"
+                height={45}
+              />
+            </Pressable>
+          </View>
+      </View>
     </Modal>
   );
 }
@@ -110,7 +108,6 @@ export default function AddMemoryModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },

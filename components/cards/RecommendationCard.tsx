@@ -8,6 +8,8 @@ import { tr } from "date-fns/locale";
 import CustomButton from "@/components/CustomButton";
 import GoalDetailsModal from "@/components/modals/GoalDetailsModal";
 
+import { useLanguage } from "@/app/LanguageContext";
+
 const { width } = Dimensions.get("window");
 
 type RecommendationCardProps = {
@@ -22,6 +24,8 @@ export default function RecommendationCard({
   const [isDetailsModalVisible, setIsDetailsModalVisible] =
     useState<boolean>(false);
 
+  const { t, language, setLanguage } = useLanguage();
+
   const createdAt = goal.createdAt.toDate(); // convert Timestamp to Date
   let formattedDate = "";
 
@@ -35,6 +39,10 @@ export default function RecommendationCard({
 
   const handleDetailsPress = () => {
     setIsDetailsModalVisible(true);
+  };
+
+  const handleAddPersonalList = () => {
+    console.log("Add to personal list");
   };
 
   // console.log("Goal: ", goal);
@@ -156,9 +164,15 @@ export default function RecommendationCard({
 
       <View style={styles.commentContainer}>
         <CustomText type="bold" fontSize={14} color="#1E3A5F">
-          Yorum:
+          {goal.senderNickname} {t("goalDetails.comment")}:
         </CustomText>
-        <CustomText type="regular" fontSize={14} color="#333">
+        <CustomText
+          type="regular"
+          fontSize={14}
+          color="#333"
+          numberOfLines={3} 
+          ellipsizeMode="tail"
+        >
           {goal.comment}
         </CustomText>
       </View>
@@ -173,7 +187,7 @@ export default function RecommendationCard({
         />
         <CustomButton
           label="Listene Ekle"
-          onPress={() => {}}
+          onPress={handleAddPersonalList}
           width={"50%"}
           height={40}
           variant="fill"

@@ -19,6 +19,7 @@ import {
   deleteDoc,
   doc,
   Timestamp,
+  onSnapshot,
 } from "firebase/firestore";
 import PlusIcon from "@/components/icons/PlusIcon";
 
@@ -51,41 +52,93 @@ export default function CalendarPage() {
   const today = new Date().toISOString().split("T")[0];
 
   // Fetch todos from Firebase
-  const fetchTodos = async () => {
+  // const fetchTodos = async () => {
+  //   if (!userId) return;
+
+  //   try {
+  //     const todosRef = collection(db, "users", userId, "todos");
+  //     const querySnapshot = await getDocs(todosRef);
+  //     // console.log("querySnapshot", querySnapshot);
+
+  //     const todos: { [key: string]: Todo[] } = {};
+
+  //     querySnapshot.docs.forEach((doc) => {
+  //       const todo = doc.data();
+  //       const dueDate = todo.dueDate.toDate().toISOString().split("T")[0];
+  //       // console.log("todo", dueDate);
+
+  //       if (!todos[dueDate]) {
+  //         todos[dueDate] = [];
+  //       }
+
+  //       todos[dueDate].push({
+  //         id: doc.id,
+  //         text: todo.text,
+  //         isDone: todo.isDone,
+  //         createdAt: todo.createdAt,
+  //         dueDate: todo.dueDate.toDate().toISOString(),
+  //       });
+  //       // console.log("todo", todos);
+  //       setTodos(todos);
+  //     });
+  //   } catch (error) {}
+  // };
+
+  // useEffect(() => {
+  //   fetchTodos();
+  //   setSelectedDay(today);
+  // }, [userId]);
+
+  const fetchTodosRealtime = (userId: string, setTodos: Function) => {
     if (!userId) return;
 
     try {
       const todosRef = collection(db, "users", userId, "todos");
-      const querySnapshot = await getDocs(todosRef);
-      // console.log("querySnapshot", querySnapshot);
 
-      const todos: { [key: string]: Todo[] } = {};
+      const unsubscribe = onSnapshot(todosRef, (snapshot) => {
+        const todos: { [key: string]: Todo[] } = {};
 
-      querySnapshot.docs.forEach((doc) => {
-        const todo = doc.data();
-        const dueDate = todo.dueDate.toDate().toISOString().split("T")[0];
-        // console.log("todo", dueDate);
+        snapshot.docs.forEach((doc) => {
+          const todo = doc.data();
 
-        if (!todos[dueDate]) {
-          todos[dueDate] = [];
-        }
+          // dueDate varsa ve Timestamp formatındaysa Date'e çevir
+          const dueDate =
+            todo.dueDate && todo.dueDate.toDate
+              ? todo.dueDate.toDate().toISOString().split("T")[0]
+              : null;
 
-        todos[dueDate].push({
-          id: doc.id,
-          text: todo.text,
-          isDone: todo.isDone,
-          createdAt: todo.createdAt,
-          dueDate: todo.dueDate.toDate().toISOString(),
+          if (!dueDate) return; // Eğer geçerli bir dueDate yoksa, todo'yu ekleme
+
+          if (!todos[dueDate]) {
+            todos[dueDate] = [];
+          }
+
+          todos[dueDate].push({
+            id: doc.id,
+            text: todo.text,
+            isDone: todo.isDone,
+            createdAt: todo.createdAt || null,
+            dueDate: dueDate,
+          });
         });
-        // console.log("todo", todos);
+
         setTodos(todos);
       });
-    } catch (error) {}
+
+      return unsubscribe;
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+    }
   };
 
   useEffect(() => {
-    fetchTodos();
-    setSelectedDay(today);
+    if (!userId) return;
+
+    const unsubscribe = fetchTodosRealtime(userId, setTodos);
+
+    return () => {
+      if (unsubscribe) unsubscribe(); // Component unmount olursa dinlemeyi durdur
+    };
   }, [userId]);
 
   const handleDayPress = (day: DateData) => {
@@ -95,46 +148,48 @@ export default function CalendarPage() {
   // Toggle todo completion
   const toggleTodo = async (todoId: string) => {
     if (!userId || !selectedDay) return;
-
+  
     try {
-      const todoRef = doc(db, "users", userId, "todos", todoId);
-      const currentTodo = todos[selectedDay].find((todo) => todo.id === todoId);
-
-      if (currentTodo) {
-        await updateDoc(todoRef, {
-          isDone: !currentTodo.isDone,
-        });
-
-        setTodos((prevTodos) => ({
+      setTodos((prevTodos) => {
+        if (!prevTodos[selectedDay]) return prevTodos;
+  
+        return {
           ...prevTodos,
           [selectedDay]: prevTodos[selectedDay].map((todo) =>
             todo.id === todoId ? { ...todo, isDone: !todo.isDone } : todo
           ),
-        }));
-      }
+        };
+      });
+  
+      const todoRef = doc(db, "users", userId, "todos", todoId);
+      await updateDoc(todoRef, { isDone: !todos[selectedDay].find((todo) => todo.id === todoId)?.isDone });
     } catch (error) {
       console.error("Error toggling todo:", error);
     }
   };
+  
 
   // Delete todo
   const deleteTodo = async (todoId: string) => {
     if (!userId || !selectedDay) return;
-
+  
     try {
       const todoRef = doc(db, "users", userId, "todos", todoId);
       await deleteDoc(todoRef);
-
-      setTodos((prevTodos) => ({
-        ...prevTodos,
-        [selectedDay]: prevTodos[selectedDay].filter(
-          (todo) => todo.id !== todoId
-        ),
-      }));
+  
+      setTodos((prevTodos) => {
+        if (!prevTodos[selectedDay]) return prevTodos; // Eğer seçili gün yoksa hata almamak için eski state döndür
+  
+        return {
+          ...prevTodos,
+          [selectedDay]: prevTodos[selectedDay].filter((todo) => todo.id !== todoId),
+        };
+      });
     } catch (error) {
       console.error("Error deleting todo:", error);
     }
   };
+  
 
   const renderDayTodos = (dateString: string) => {
     const dayTodos = todos[dateString] || [];
@@ -155,7 +210,9 @@ export default function CalendarPage() {
           </CustomText>
         ))}
         {dayTodos.length > 2 && (
-          <CustomText style={styles.moreTodosText}>+{dayTodos.length - 2} more</CustomText>
+          <CustomText style={styles.moreTodosText}>
+            +{dayTodos.length - 2} more
+          </CustomText>
         )}
       </View>
     );
@@ -212,13 +269,13 @@ export default function CalendarPage() {
 
         {selectedDay && todos[selectedDay]?.length > 0 && (
           <View style={styles.selectedDayTodos}>
-            <CustomText 
+            <CustomText
               style={styles.selectedDayTitle}
               type="bold"
               fontSize={18}
               color="#1E3A5F"
             >
-              {selectedDay}  {t("calendar.title")}
+              {selectedDay} {t("calendar.title")}
             </CustomText>
             <View style={styles.todoList}>
               {todos[selectedDay]?.map((todo) => (

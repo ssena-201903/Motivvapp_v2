@@ -1,13 +1,8 @@
 import React, { useState } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Platform,
-  Dimensions,
-} from "react-native";
+import { View, TextInput, StyleSheet, Dimensions } from "react-native";
+
+import Modal from "react-native-modal";
+
 import { db, auth } from "@/firebase.config";
 import CustomButton from "@/components/CustomButton";
 import StarRating from "@/components/icons/StarRating";
@@ -41,7 +36,7 @@ export default function AddGoalModal({
   });
 
   // language context
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
 
   const handleRatingChange = (rating: number) => {
     setGoalData({ ...goalData, rating });
@@ -153,7 +148,12 @@ export default function AddGoalModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)"
+    >
       <View style={styles.overlay}>
         <View style={styles.content}>
           <CustomText
@@ -241,7 +241,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   content: {
     backgroundColor: "#FCFCFC",

@@ -2,13 +2,14 @@ import React, { useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
-  Modal,
   Dimensions,
   Alert,
   TouchableOpacity,
   Keyboard,
   Platform,
 } from "react-native";
+
+import Modal from "react-native-modal";
 
 // components
 import InputField from "@/components/cards/InputField";
@@ -246,12 +247,10 @@ export default function AddOtherHabitModal({
 
   return (
     <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={() => {
-        if (!isSaving) onClose();
-      }}
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)"
     >
       <View style={styles.overlay}>
         <View style={styles.modalView}>
@@ -327,7 +326,6 @@ export default function AddOtherHabitModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },

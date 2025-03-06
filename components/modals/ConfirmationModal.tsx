@@ -1,12 +1,10 @@
 import React from "react";
 import {
-  Modal,
   View,
-  Text,
   StyleSheet,
-  Platform,
   Dimensions,
 } from "react-native";
+import Modal from "react-native-modal";
 import CustomButton from "../CustomButton";
 import { CustomText } from "@/CustomText";
 
@@ -33,7 +31,12 @@ export default function ConfirmationModal({
   const { t } = useLanguage();
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)"
+    >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <CustomText color="#1E3A5F" fontSize={18} type="bold">
@@ -73,7 +76,6 @@ export default function ConfirmationModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
   },

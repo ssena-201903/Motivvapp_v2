@@ -14,12 +14,14 @@ import {
   where,
   doc,
   deleteDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import { CustomText } from "@/CustomText";
 import { router } from "expo-router";
 import CardOtherHabit from "./cards/CardOtherHabit";
 
 import { useLanguage } from "@/app/LanguageContext";
+import { showMessage } from "react-native-flash-message";
 
 const { width } = Dimensions.get("window");
 
@@ -52,6 +54,72 @@ export default function HomeSection({ variant }: Props) {
       return a.isDone ? 1 : -1;
     });
   };
+
+  const fetchTodosRealtime = (
+    userId: string,
+    setCurrentTodos: Function,
+    setTodosPercentage: Function,
+    setLoading: Function
+  ) => {
+    if (!userId) return;
+
+    try {
+      const todosRef = collection(db, "users", userId, "todos");
+
+      // Bugünün tarihini belirle
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startOfDay = Timestamp.fromDate(today);
+
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+      const endOfDayTimestamp = Timestamp.fromDate(endOfDay);
+
+      // Sadece bugün olanları getir
+      const q = query(
+        todosRef,
+        where("dueDate", ">=", startOfDay),
+        where("dueDate", "<=", endOfDayTimestamp)
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const todosData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          text: doc.data().text,
+          isDone: doc.data().isDone,
+          dueDate: doc.data().dueDate.toDate(), // Firestore Timestamp'ten Date objesine çevir
+        }));
+
+        // Tamamlanmamışları önce göster
+        const sortedTodos = todosData.sort((a, b) =>
+          a.isDone === b.isDone ? 0 : a.isDone ? 1 : -1
+        );
+
+        setCurrentTodos(sortedTodos);
+        setTodosPercentage(calculateTodosPercentage(sortedTodos));
+        setLoading(false);
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (variant !== "todos" || !userId) return;
+
+    const unsubscribe = fetchTodosRealtime(
+      userId,
+      setCurrentTodos,
+      setTodosPercentage,
+      setLoading
+    );
+
+    return () => {
+      if (unsubscribe) unsubscribe(); // Component unmount olursa Firestore dinlemeyi durdur
+    };
+  }, [userId, variant]); // userId veya variant değişince tekrar çalışır
 
   const fetchHabitDatas = async () => {
     try {
@@ -130,42 +198,42 @@ export default function HomeSection({ variant }: Props) {
     return Math.round((completedHabits / totalHabits) * 100);
   };
 
-  const fetchTodos = async () => {
-    if (!userId) return;
+  // const fetchTodos = async () => {
+  //   if (!userId) return;
 
-    try {
-      const todosRef = collection(db, "users", userId, "todos");
-      const today = new Date();
-      const startOfDay = new Date(today);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(today);
-      endOfDay.setHours(23, 59, 59, 999);
+  //   try {
+  //     const todosRef = collection(db, "users", userId, "todos");
+  //     const today = new Date();
+  //     const startOfDay = new Date(today);
+  //     startOfDay.setHours(0, 0, 0, 0);
+  //     const endOfDay = new Date(today);
+  //     endOfDay.setHours(23, 59, 59, 999);
 
-      const q = query(
-        todosRef,
-        where("dueDate", ">=", startOfDay),
-        where("dueDate", "<=", endOfDay)
-      );
-      const querySnapshot = await getDocs(q);
-      const todosData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+  //     const q = query(
+  //       todosRef,
+  //       where("dueDate", ">=", startOfDay),
+  //       where("dueDate", "<=", endOfDay)
+  //     );
+  //     const querySnapshot = await getDocs(q);
+  //     const todosData = querySnapshot.docs.map((doc) => ({
+  //       id: doc.id,
+  //       ...doc.data(),
+  //     }));
 
-      // Sort todos: false (incomplete) first, then true (complete)
-      const sortedTodos = todosData.sort((a: any, b: any) => {
-        if (a.isDone === b.isDone) return 0;
-        return a.isDone ? 1 : -1;
-      });
+  //     // Sort todos: false (incomplete) first, then true (complete)
+  //     const sortedTodos = todosData.sort((a: any, b: any) => {
+  //       if (a.isDone === b.isDone) return 0;
+  //       return a.isDone ? 1 : -1;
+  //     });
 
-      setCurrentTodos(sortedTodos);
-      setTodosPercentage(calculateTodosPercentage(sortedTodos));
-    } catch (error) {
-      console.log("error fetching todos", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setCurrentTodos(sortedTodos);
+  //     setTodosPercentage(calculateTodosPercentage(sortedTodos));
+  //   } catch (error) {
+  //     console.log("error fetching todos", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const fetchGoals = async () => {
     if (!userId) return;
@@ -229,9 +297,6 @@ export default function HomeSection({ variant }: Props) {
   };
 
   useEffect(() => {
-    if (variant === "todos") {
-      fetchTodos();
-    }
     if (variant === "goals") {
       fetchGoals();
     }

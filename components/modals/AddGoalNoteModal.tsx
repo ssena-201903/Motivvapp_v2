@@ -1,10 +1,17 @@
 import React, { useState } from "react";
-import { Modal, View, TextInput, StyleSheet, Dimensions, Pressable } from "react-native";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  Dimensions,
+  Pressable,
+} from "react-native";
 import CustomButton from "@/components/CustomButton";
 import { CustomText } from "@/CustomText";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from "@/firebase.config";
-import InputField from "../cards/InputField";
+
+import Modal from "react-native-modal";
 
 const { width } = Dimensions.get("window");
 
@@ -51,7 +58,13 @@ export default function AddGoalNoteModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)"
+      onBackdropPress={onClose}
+    >
       <View style={styles.overlay}>
         <Pressable style={styles.content} onPress={handleModelContentPress}>
           <CustomText
@@ -101,7 +114,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   content: {
     backgroundColor: "#FCFCFC",

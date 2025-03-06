@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import {
   View,
-  Modal,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   Dimensions,
   Pressable,
 } from "react-native";
+import Modal from "react-native-modal";
 import CustomButton from "@/components/CustomButton";
 import { CustomText } from "@/CustomText";
 import { useLanguage } from "@/app/LanguageContext";
@@ -37,8 +37,14 @@ export default function EditGoalModal({ visible, onClose, initialName, onSave }:
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.modalContainer}>
+    <Modal
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)"
+      onBackdropPress={onClose}
+    >
+      <View style={styles.overlay}>
         <Pressable style={styles.modalContent} onPress={handleModelContentPress}>
           <CustomText type="semibold" fontSize={18} color="#1E3A5F" style={{ marginBottom: 20 }}>
             {t("editModal.titleGoal")}
@@ -75,11 +81,10 @@ export default function EditGoalModal({ visible, onClose, initialName, onSave }:
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  overlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
     backgroundColor: "#fff",

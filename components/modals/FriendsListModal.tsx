@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -18,8 +17,6 @@ import BoxIcon from "@/components/icons/BoxIcon";
 import { auth, db } from "@/firebase.config";
 import { collection, getDocs, query, where, addDoc } from "firebase/firestore";
 import { showMessage } from "react-native-flash-message";
-import CheckIcon from "@/components/icons/CheckIcon";
-import { is } from "date-fns/locale";
 
 const { width } = Dimensions.get("window");
 
@@ -125,8 +122,6 @@ export default function FriendsListModal({
       const userId = auth.currentUser?.uid;
       if (!userId) return;
 
-      // console.log("GOALS:", goal.id, goal.category, goal.genres);
-
       for (const friend of selectedFriends) {
         // Sadece bir array-contains filtresi kullanıyoruz
         const friendshipQuery = query(
@@ -155,7 +150,7 @@ export default function FriendsListModal({
             category: goal.category,
 
             ...(goal.category === "Book" && {
-              readingStatus: goal.readingStatus,
+              readingStatus: "not started",
               author: goal.author,
             }),
 
@@ -258,7 +253,7 @@ export default function FriendsListModal({
           </View>
 
           <TouchableOpacity
-            style={styles.friendItem}
+            style={styles.addNotesContainer}
             onPress={() => setIsNotesAdded((prev) => !prev)}
           >
             <BoxIcon
@@ -305,7 +300,6 @@ export default function FriendsListModal({
                     color={item.selected ? "#333" : "#333"}
                     fontSize={14}
                     type={item.selected ? "semibold" : "medium"}
-                    style={styles.friendName}
                   >
                     {item.nickname}
                   </CustomText>
@@ -382,6 +376,12 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: "top",
   },
+  addNotesContainer: {
+    marginBottom: 15,
+    display: "flex",
+    flexDirection: "row",
+    gap: 10,
+  },
   friendsTitle: {
     marginBottom: 10,
   },
@@ -394,9 +394,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-  },
-  friendName: {
-    marginLeft: 10,
+    marginBottom: 10,
+    gap: 10,
   },
   emptyListText: {
     textAlign: "center",

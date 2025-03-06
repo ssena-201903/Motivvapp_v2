@@ -2,12 +2,13 @@ import React, { useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
-  Modal,
   Dimensions,
   Alert,
   TouchableOpacity,
   Platform,
 } from "react-native";
+
+import Modal from "react-native-modal";
 
 //components
 import InputField from "@/components/cards/InputField";
@@ -38,7 +39,8 @@ const { width } = Dimensions.get("window");
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSave?: (waterData: {
+  onSave?: (waterData: any) => void;
+  waterData?: ({
     dailyWaterIntake: number;
     dailyCupsNeeded: number;
     dailyCupSize: number;
@@ -52,7 +54,7 @@ type Props = {
     healthCondition: string;
     dietType: string;
     sleepHours: string;
-  }) => void;
+  });
 };
 
 export default function AddWaterHabitModal({
@@ -767,10 +769,11 @@ export default function AddWaterHabitModal({
 
   return (
     <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
+      isVisible={visible}
+      animationIn="slideInUp"
+      animationOut="slideOutDown"
+      backdropColor="rgba(0, 0, 0, 0.8)"
+      onBackdropPress={onClose}
     >
       <View style={styles.overlay}>
         <View style={styles.modalView}>
@@ -801,7 +804,6 @@ export default function AddWaterHabitModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
