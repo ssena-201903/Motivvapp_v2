@@ -13,7 +13,7 @@ import {
   doc,
   updateDoc,
   collection,
-  getDocs,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
@@ -26,6 +26,7 @@ const { width } = Dimensions.get("window");
 interface Props {
   variant: "Sport" | "Book" | "Vocabulary" | "Custom";
   userId: string;
+  onLongPress: (habitId: string, habitText: string) => void;
 }
 
 interface HabitData {
@@ -39,7 +40,7 @@ interface HabitData {
   doneNumber: number;
 }
 
-export default function CardOtherHabit({ variant, userId }: Props) {
+export default function CardOtherHabit({ variant, userId, onLongPress }: Props) {
   const [habits, setHabits] = useState<HabitData[]>([]);
   const [isFeedbackVisible, setIsFeedbackVisible] = useState<boolean>(false);
   const [isConfirmationVisible, setIsConfirmationVisible] =
@@ -53,35 +54,39 @@ export default function CardOtherHabit({ variant, userId }: Props) {
   // language context
   const { t } = useLanguage();
 
-  const fetchHabitData = async () => {
+  useEffect(() => {
+    // Veri tabanına bağlanmak için gerekli kontroller
+    if (!userId) return;
+
     try {
       const habitsRef = collection(db, `users/${userId}/habits`);
       const q = query(habitsRef, where("variant", "==", variant));
-      const querySnapshot = await getDocs(q);
+      
+      // onSnapshot ile veritabanındaki değişiklikleri dinle
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        if (!querySnapshot.empty) {
+          const habitsList = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as HabitData[];
 
-      if (!querySnapshot.empty) {
-        const habitsList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as HabitData[];
-
-        // get the first habit if variant is not "Custom"
-        if (variant !== "Custom") {
-          setHabits([habitsList[0]]);
+          // get the first habit if variant is not "Custom"
+          if (variant !== "Custom") {
+            setHabits([habitsList[0]]);
+          } else {
+            // set all habits if variant is "Custom"
+            setHabits(habitsList);
+          }
         } else {
-          // set all habits if variant is "Custom"
-          setHabits(habitsList);
+          setHabits([]);
         }
-      } else {
-        setHabits([]);
-      }
-    } catch (error) {
-      console.error("Error fetching habit data: ", error);
-    }
-  };
+      });
 
-  useEffect(() => {
-    fetchHabitData();
+      // Component unmount olduğunda listener'ı temizle
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error setting up habit data listener: ", error);
+    }
   }, [userId, variant]);
 
   const updateHabit = async (
@@ -104,7 +109,7 @@ export default function CardOtherHabit({ variant, userId }: Props) {
       });
 
       setIsFeedbackVisible(isDone);
-      fetchHabitData();
+      // fetchHabitData() artık gerekli değil, onSnapshot otomatik olarak güncelliyor
     } catch (error) {
       console.error("Error updating habit: ", error);
     }
@@ -219,9 +224,10 @@ export default function CardOtherHabit({ variant, userId }: Props) {
   };
 
   const renderHabitCard = (habit: HabitData) => (
-    <View
+    <Pressable
       key={habit.id}
       style={habit.isDone ? styles.doneHabit : styles.container}
+      onLongPress={() => onLongPress && onLongPress(habit.id, habit.customText)}
     >
       <View style={styles.leftContainer}>
         <View
@@ -305,7 +311,7 @@ export default function CardOtherHabit({ variant, userId }: Props) {
           </CustomText>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 
   return (
@@ -385,7 +391,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: "50%",
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#E8EFF5",
