@@ -7,7 +7,7 @@ type Props = {
   variant?: "fill" | "outlined";
 };
 
-export default function CarIcon({ size, color, variant }: Props) {
+export default function TravelIcon({ size, color, variant }: Props) {
   let svgIcon;
   if (variant === "fill") {
     svgIcon = `

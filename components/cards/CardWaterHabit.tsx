@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   doneHabit: {
-    backgroundColor: "#E5EEFF",
+    backgroundColor: "#E8EFF5",
     display: "flex",
     flexDirection: "row",
     alignItems: "flex-start",

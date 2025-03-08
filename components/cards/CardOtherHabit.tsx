@@ -19,9 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import CardFeedback from "./CardFeedback";
-
 import { useLanguage } from "@/app/LanguageContext";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 const { width } = Dimensions.get("window");
 
@@ -127,7 +125,7 @@ export default function CardOtherHabit({ variant, userId }: Props) {
             habit.streakDays - 1,
             habit.doneNumber - 1,
             currentDate,
-            false,
+            false
           ),
       });
     } else {
@@ -187,32 +185,31 @@ export default function CardOtherHabit({ variant, userId }: Props) {
       case "Book":
         return (
           <BookIcon
-            size={22}
-            color={isDone ? "#1E3A5F" : "#1E3A5FCC"}
-            variant="fill"
+            size={18}
+            color={isDone ? "#E8EFF5" : "#1E3A5F"}
           />
         );
       case "Sport":
         return (
           <SportIcon
-            size={22}
-            color={isDone ? "#1E3A5F" : "#1E3A5FCC"}
+            size={18}
+            color={isDone ? "#E8EFF5" : "#1E3A5F"}
             variant="fill"
           />
         );
       case "Vocabulary":
         return (
           <VocabularyIcon
-            size={26}
-            color={isDone ? "#1E3A5F" : "#1E3A5FCC"}
+            size={18}
+            color={isDone ? "#E8EFF5" : "#1E3A5F"}
             variant="fill"
           />
         );
       case "Custom":
         return (
           <SparklesIcon
-            size={22}
-            color={isDone ? "#1E3A5F" : "#1E3A5FCC"}
+            size={18}
+            color={isDone ? "#E8EFF5" : "#1E3A5F"}
             variant="fill"
           />
         );
@@ -226,68 +223,20 @@ export default function CardOtherHabit({ variant, userId }: Props) {
       key={habit.id}
       style={habit.isDone ? styles.doneHabit : styles.container}
     >
-      <View style={styles.leftView}>
-        <View style={styles.leftIconContainer}>{getIcon(habit.isDone)}</View>
-        <View style={styles.leftTextContainer}>
-          <CustomText
-            type="medium"
-            color="#1E3A5F"
-            fontSize={14}
-          >
+      <View style={styles.leftContainer}>
+        <View
+          style={[
+            styles.iconContainer,
+            habit.isDone && styles.doneIconContainer, 
+          ]}
+        >
+          {getIcon(habit.isDone)}
+        </View>
+
+        <View style={styles.infoContainer}>
+          <CustomText type="medium" color="#1E3A5F" fontSize={14}>
             {variant === "Custom" ? habit.customText : getHabitVariant()}
           </CustomText>
-        </View>
-      </View>
-      <View style={styles.rightContainer}>
-        <View style={styles.top}>
-          <View style={styles.textContainer}>
-            <CustomText
-              style={styles.subTextDone}
-              type="light"
-              color="#1E3A5F"
-              fontSize={14}
-            >{`${habit.goalNumber} ${t("home.cardHabitGoalDays")}`}</CustomText>
-            <View style={styles.streakContainer}>
-              {habit.streakDays > 20 ? (
-                <TreeIcon
-                  size={22}
-                  color={habit.isDone ? "#1E3A5F" : "#1E3A5FCC"}
-                  variant={habit.isDone ? "fill" : "outlined"}
-                  type="plural"
-                />
-              ) : habit.streakDays > 13 ? (
-                <TreeIcon
-                  size={22}
-                  color={habit.isDone ? "#1E3A5F" : "#1E3A5FCC"}
-                  variant={habit.isDone ? "fill" : "outlined"}
-                  type="single"
-                />
-              ) : (
-                <LeafIcon
-                  size={18}
-                  color={habit.isDone ? "#1E3A5F" : "#1E3A5FCC"}
-                  variant={habit.isDone ? "fill" : "outlined"}
-                />
-              )}
-              <CustomText
-                style={styles.streakText}
-                color="#1E3A5F"
-                fontSize={16}
-                type={habit.isDone ? "medium" : "regular"}
-              >
-                {habit.streakDays}
-              </CustomText>
-            </View>
-          </View>
-          <Pressable onPress={() => handleDonePress(habit)}>
-            <BoxIcon
-              size={20}
-              color="#1E3A5F"
-              variant={habit.isDone ? "fill" : "outlined"}
-            />
-          </Pressable>
-        </View>
-        <View style={styles.bottom}>
           <CustomText
             style={styles.subTextType}
             color="#1E3A5F"
@@ -295,6 +244,64 @@ export default function CardOtherHabit({ variant, userId }: Props) {
             type="regular"
           >
             {getSubTextType(habit)}
+          </CustomText>
+        </View>
+      </View>
+
+      <View style={styles.rightContainer}>
+        <View style={styles.topRow}>
+          <View style={styles.streakContainer}>
+            {habit.streakDays > 20 ? (
+              <TreeIcon
+                size={22}
+                color={habit.isDone ? "#1E3A5F" : "#1E3A5FCC"}
+                variant={habit.isDone ? "fill" : "outlined"}
+                type="plural"
+              />
+            ) : habit.streakDays > 13 ? (
+              <TreeIcon
+                size={22}
+                color={habit.isDone ? "#1E3A5F" : "#1E3A5FCC"}
+                variant={habit.isDone ? "fill" : "outlined"}
+                type="single"
+              />
+            ) : (
+              <LeafIcon
+                size={18}
+                color={habit.isDone ? "#1E3A5F" : "#1E3A5FCC"}
+                variant={habit.isDone ? "fill" : "outlined"}
+              />
+            )}
+            <CustomText
+              style={styles.streakText}
+              color="#1E3A5F"
+              fontSize={16}
+              type={habit.isDone ? "medium" : "regular"}
+            >
+              {habit.streakDays}
+            </CustomText>
+          </View>
+
+          <Pressable
+            onPress={() => handleDonePress(habit)}
+            style={styles.checkboxContainer}
+          >
+            <BoxIcon
+              size={20}
+              color="#1E3A5F"
+              variant={habit.isDone ? "fill" : "outlined"}
+            />
+          </Pressable>
+        </View>
+
+        <View style={styles.bottomRow}>
+          <CustomText
+            style={styles.goalText}
+            type="light"
+            color="#1E3A5F"
+            fontSize={10}
+          >
+            {`${habit.goalNumber} ${t("home.cardHabitGoalDays")}`}
           </CustomText>
         </View>
       </View>
@@ -329,7 +336,7 @@ const styles = StyleSheet.create({
   container: {
     display: "flex",
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     minWidth: "100%",
     minHeight: 70,
@@ -337,8 +344,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E8EFF5",
     borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -349,18 +356,18 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   doneHabit: {
-    backgroundColor: "#E5EEFF",
+    backgroundColor: "#E8EFF5",
     display: "flex",
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
     minWidth: "100%",
     minHeight: 70,
     borderWidth: 1,
     borderColor: "#CEDEEB",
     borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -370,60 +377,60 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  leftView: {
-    width: "50%",
-    height: "auto",
+  leftContainer: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
+    flex: 1,
   },
-  leftIconContainer: {
-    width: 22,
-    height: 22,
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10,
+    backgroundColor: "#E8EFF5",
+    marginRight: 12,
   },
-  leftTextContainer: {
+  doneIconContainer: {
+    backgroundColor: "#1E3A5F",
+  },
+  infoContainer: {
+    justifyContent: "center",
+    gap: 4,
     flex: 1,
-    overflow: "hidden",
   },
   rightContainer: {
-    display: "flex",
     flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "50%",
-    height: "100%",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    gap: 6,
   },
-  top: {
+  topRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
+    marginBottom: 4,
+  },
+  bottomRow: {
+    alignItems: "flex-end",
     width: "100%",
-  },
-  bottom: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    width: "100%",
-  },
-  textContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 20,
-  },
-  subTextDone: {
-    opacity: 0.8,
-    marginRight: 20,
-  },
-  subTextType: {
-    opacity: 0.6,
   },
   streakContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginRight: 16,
   },
   streakText: {
     marginLeft: 2,
+  },
+  checkboxContainer: {
+    padding: 2,
+  },
+  goalText: {
+    opacity: 0.8,
+  },
+  subTextType: {
+    opacity: 0.6,
+    marginTop: 2,
   },
 });

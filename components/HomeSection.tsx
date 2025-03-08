@@ -334,13 +334,13 @@ export default function HomeSection({ variant }: Props) {
               onCategoryPress={handleCategoryPress}
             />
             <CardGoal
-              inlineText={t("home.cardGoalTry")}
-              categoryId="Activity"
+              inlineText={t("home.cardGoalRead")}
+              categoryId="Book"
               onCategoryPress={handleCategoryPress}
             />
             <CardGoal
-              inlineText={t("home.cardGoalRead")}
-              categoryId="Book"
+              inlineText={t("home.cardGoalTry")}
+              categoryId="Activity"
               onCategoryPress={handleCategoryPress}
             />
           </View>
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   container: {
     display: "flex",
     flexDirection: "column",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "flex-start",
     flex: 1,
     paddingHorizontal: 20,
@@ -424,18 +424,18 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: "center",
     paddingVertical: 20,
+    width: width > 768 ? width - 520 : width - 40,
   },
   gridView: {
     display: "flex",
     flexWrap: "wrap",
     padding: 5,
     gap: 8,
-    width: width > 768 ? width - 510 : "100%",
-    // marginHorizontal: 20,
+    width: "100%",
     flex: 1,
     justifyContent: "flex-start",
     flexGrow: 1,
-    height: 300,
+    // height: 300,
   },
   gridViewRow: {
     display: "flex",

@@ -1,9 +1,10 @@
-import { StyleSheet, Pressable, Dimensions } from "react-native";
+import { StyleSheet, Pressable, Dimensions, View } from "react-native";
 import { CustomText } from "@/CustomText";
 import MovieIcon from "../icons/MovieIcon";
-import CarIcon from "../icons/CarIcon";
+// import TravelIcon from "../icons/TravelIcon";
+import PlaneIcon from "../icons/PlaneIcon";
 import FoodIcon from "../icons/FoodIcon";
-import WalletIcon from "../icons/WalletIcon";
+import WalletIcon from "../icons/ShoppingIcon";
 import ActivityIcon from "../icons/ActivityIcon";
 import BookIcon from "../icons/BookIcon";
 import SellIcon from "../icons/SellIcon";
@@ -27,25 +28,19 @@ export default function CardGoal({
       style={styles.container}
       onPress={() => onCategoryPress(categoryId)}
     >
-      {categoryId === "Movie" && (
-        <MovieIcon size={18} color="#1E3A5F" variant="fill" />
-      )}
-      {categoryId === "Place" && (
-        <CarIcon size={22} color="#1E3A5F" variant="fill" />
-      )}
-      {categoryId === "Food" && (
-        <FoodIcon size={22} color="#1E3A5F" variant="fill" />
-      )}
-      {categoryId === "Buy" && (
-        <WalletIcon size={22} color="#1E3A5F" variant="fill" />
-      )}
-      {categoryId === "Activity" && (
-        <ActivityIcon size={26} color="#1E3A5F" variant="fill" />
-      )}
-      {categoryId === "Book" && (
-        <BookIcon size={22} color="#1E3A5F" variant="fill" />
-      )}
-      <CustomText 
+      <View>
+        {categoryId === "Movie" && (
+          <MovieIcon size={20} color="#1E3A5F" variant="fill" />
+        )}
+        {categoryId === "Place" && <PlaneIcon size={20} color="#1E3A5F" />}
+        {categoryId === "Food" && <FoodIcon size={20} color="#1E3A5F" />}
+        {categoryId === "Buy" && <WalletIcon size={20} color="#1E3A5F" />}
+        {categoryId === "Book" && <BookIcon size={20} color="#1E3A5F" />}
+        {categoryId === "Activity" && (
+          <ActivityIcon size={20} color="#1E3A5F" />
+        )}
+      </View>
+      <CustomText
         style={styles.inlineText}
         color="#1E3A5F"
         type="medium"
@@ -63,12 +58,13 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     width: "31%",
     height: width > 768 ? 80 : 65,
+    alignItems: "center",
+    justifyContent: "center",
+    // gap: 4,
     backgroundColor: "#FDFDFD",
     borderWidth: 1,
     borderColor: "#E8EFF5",
     borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -78,10 +74,31 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  // iconContainer: {
+  //   width: 50,
+  //   height: 50,
+  //   // borderRadius: "50%",
+  //   borderRadius: 4,
+  //   backgroundColor: "#E5EEFF",
+  //   alignItems: "center",
+  //   justifyContent: "center",
+  //   // backgroundColor: "#FDFDFD",
+  //   borderWidth: 1,
+  //   borderColor: "#E5EEFF",
+  //   // shadowColor: "#000",
+  //   // shadowOffset: {
+  //   //   width: 0,
+  //   //   height: 1,
+  //   // },
+  //   // shadowOpacity: 0.1,
+  //   // shadowRadius: 2,
+  //   // elevation: 2,
+  // },
   inlineText: {
     // marginLeft: width > 768 ? 0 : 8,
     // marginTop: width > 768 ? 8 : 0,
     marginTop: 8,
     opacity: 0.8,
+    // marginLeft: 8,
   },
 });

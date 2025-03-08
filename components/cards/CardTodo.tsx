@@ -27,10 +27,15 @@ export default function CardTodo({
   return (
     <View style={[styles.container, isCompleted && styles.doneTodo]}>
       <View style={styles.leftView}>
-        <View style={styles.leftIconContainer}>
+        <View
+          style={[
+            styles.leftIconContainer,
+            isCompleted && styles.doneIconContainer,
+          ]}
+        >
           <TodoIcon
-            size={20}
-            color={isCompleted ? "#1E3A5F" : "#1E3A5FCC"}
+            size={18}
+            color={isCompleted ? "#E8EFF5" : "#1E3A5F"}
             variant="fill"
             type={type}
           />
@@ -95,7 +100,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
     height: 70,
-    backgroundColor: "#E5EEFF",
+    backgroundColor: "#E8EFF5",
     borderWidth: 1,
     borderColor: "#CEDEEB",
     borderRadius: 8,
@@ -121,11 +126,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   leftIconContainer: {
-    width: 22,
-    height: 22,
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10,
+    backgroundColor: "#E8EFF5",
+    marginRight: 12,
+  },
+  doneIconContainer: {
+    backgroundColor: "#1E3A5F",
   },
   leftTextContainer: {
     flex: 1,

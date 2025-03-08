@@ -24,7 +24,7 @@ export default function RecommendationCard({
   const [isDetailsModalVisible, setIsDetailsModalVisible] =
     useState<boolean>(false);
 
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
 
   const createdAt = goal.createdAt.toDate(); // convert Timestamp to Date
   let formattedDate = "";
@@ -59,7 +59,7 @@ export default function RecommendationCard({
           fontSize={14}
           color="#999"
         >
-          🍿 Film • {formattedDate}
+          🍿 {t("recommendation.movieText")} • {formattedDate}
         </CustomText>
       )}
       {goal.category === "Movie" && goal.type === "series" && (
@@ -69,7 +69,7 @@ export default function RecommendationCard({
           fontSize={14}
           color="#999"
         >
-          📺 Dizi • {formattedDate}
+          📺 {t("recommendation.serieText")} • {formattedDate}
         </CustomText>
       )}
 
@@ -80,7 +80,7 @@ export default function RecommendationCard({
           fontSize={14}
           color="#999"
         >
-          📖 Kitap • {formattedDate}
+          📖 {t("recommendation.bookText")} • {formattedDate}
         </CustomText>
       )}
       {goal.category === "Food" && (
@@ -90,7 +90,7 @@ export default function RecommendationCard({
           fontSize={14}
           color="#999"
         >
-          🍔 Yemek • {formattedDate}
+          🍔 {t("recommendation.foodText")} • {formattedDate}
         </CustomText>
       )}
       {goal.category === "Try" && (
@@ -100,7 +100,7 @@ export default function RecommendationCard({
           fontSize={14}
           color="#999"
         >
-          🪂 Aktivite • {formattedDate}
+          🪂 {t("recommendation.activityText")} • {formattedDate}
         </CustomText>
       )}
       {goal.category === "Place" && (
@@ -110,7 +110,7 @@ export default function RecommendationCard({
           fontSize={14}
           color="#999"
         >
-          🚗 Seyahat • {formattedDate}
+          🚗 {t("recommendation.placeText")} • {formattedDate}
         </CustomText>
       )}
       {goal.category === "Buy" && (
@@ -120,7 +120,7 @@ export default function RecommendationCard({
           fontSize={14}
           color="#999"
         >
-          💵 Alışveriş • {formattedDate}
+          💵 {t("recommendation.shoppingText")} • {formattedDate}
         </CustomText>
       )}
 
@@ -129,7 +129,7 @@ export default function RecommendationCard({
           {goal.senderNickname}
         </CustomText>
         <CustomText type="regular" fontSize={14} color="#666">
-          {"tavsiye ediyor"} 👍🏻
+          {t("recommendation.recommendYou")} 👍🏻
         </CustomText>
       </View>
 

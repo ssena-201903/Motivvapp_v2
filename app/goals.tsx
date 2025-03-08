@@ -18,9 +18,9 @@ import SectionHeader from "@/components/headers/SectionHeader";
 import MovieIcon from "@/components/icons/MovieIcon";
 import BookIcon from "@/components/icons/BookIcon";
 import ActivityIcon from "@/components/icons/ActivityIcon";
-import CarIcon from "@/components/icons/CarIcon";
+import CarIcon from "@/components/icons/TravelIcon";
 import SellIcon from "@/components/icons/SellIcon";
-import WalletIcon from "@/components/icons/WalletIcon";
+import WalletIcon from "@/components/icons/ShoppingIcon";
 import FoodIcon from "@/components/icons/FoodIcon";
 import PlusIcon from "@/components/icons/PlusIcon";
 
