@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { View, StyleSheet, Dimensions, Pressable, Image } from "react-native";
+import Modal from "react-native-modal";
 import { Picker } from "@react-native-picker/picker";
 import { CustomText } from "@/CustomText";
 import GoalDetailsModal from "@/components/modals/GoalDetailsModal";
@@ -11,7 +12,6 @@ import PlusIcon from "@/components/icons/PlusIcon";
 import InfoIcon from "@/components/icons/InfoIcon";
 import TrashIcon from "@/components/icons/TrashIcon";
 import PencilIcon from "@/components/icons/PencilIcon";
-import HeartIcon from "@/components/icons/HeartIcon";
 import ThumbsUpIcon from "@/components/icons/ThumbsUpIcon";
 
 import { useLanguage } from "@/app/LanguageContext";
@@ -19,6 +19,8 @@ import AddGoalNoteModal from "../modals/AddGoalNoteModal";
 import ConfirmationModal from "../modals/ConfirmationModal";
 import EditGoalModal from "@/components/modals/EditGoalModal";
 import FriendsListModal from "../modals/FriendsListModal";
+import BookIcon from "../icons/BookIcon";
+import MoreIcon from "../icons/MoreIcon";
 
 const { width } = Dimensions.get("window");
 
@@ -46,6 +48,12 @@ export default function CardGoalTodo({
   const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
   const [isFriendsModalVisible, setIsFriendsModalVisible] =
     useState<boolean>(false);
+  const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
+
+  // Menü butonu için referans
+  const menuButtonRef = useRef(null);
+  // Menü koordinatları için state
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
   // language context
   const { t } = useLanguage();
@@ -143,9 +151,9 @@ export default function CardGoalTodo({
   };
 
   const handleAddNote = (event: any) => {
-    // Olayın üst bileşenlere yayılmasını önle
     event.stopPropagation();
     setIsAddNoteModalVisible(true);
+    setIsMenuVisible(false);
   };
 
   const handleNoteAdded = (newNote: string) => {
@@ -156,22 +164,31 @@ export default function CardGoalTodo({
   // Kart tıklama işleyicisi
   const handleCardPress = () => {
     setIsDetailsModalVisible(true);
+    setIsMenuVisible(false);
   };
 
   // İç butonlar için tıklama işleyicileri
   const handleDeleteButtonPress = (event: any) => {
-    event.stopPropagation(); // Olayın kartın tıklama olayına yayılmasını engelle
+    event.stopPropagation();
     setIsConfirmationVisible(true);
+    setIsMenuVisible(false);
   };
 
   const handleEditButtonPress = (event: any) => {
     event.stopPropagation();
     setIsEditModalVisible(true);
+    setIsMenuVisible(false);
   };
 
   const handleCheckboxPress = (event: any) => {
     event.stopPropagation();
     toggleCard();
+  };
+
+  // Menü için tıklama işleyicisi - pozisyon hesaplamasını içerir
+  const openMoreMenu = (event: any) => {
+    event.stopPropagation();
+    setIsMenuVisible(true);
   };
 
   // Picker için tıklama işleyicisi
@@ -182,11 +199,13 @@ export default function CardGoalTodo({
   const handleAdvicePress = (event: any) => {
     event.stopPropagation();
     setIsFriendsModalVisible(true);
+    setIsMenuVisible(false);
   };
 
   const handleDetailsPress = (event: any) => {
     event.stopPropagation();
     setIsDetailsModalVisible(true);
+    setIsMenuVisible(false);
   };
 
   return (
@@ -272,7 +291,7 @@ export default function CardGoalTodo({
             </View>
           </View>
 
-          {/* Middle section: Rating */}
+          {/* Middle section: Rating and Menu */}
           <View style={styles.middleSection}>
             <View style={styles.ratingSection}>
               <Pressable onPress={(event) => event.stopPropagation()}>
@@ -284,51 +303,21 @@ export default function CardGoalTodo({
             </View>
 
             <View style={styles.iconsContainer}>
-              {/* Edit button for non-Movie categories */}
-              {category !== "Movie" && (
-                <Pressable
-                  style={styles.actionButton}
-                  onPress={handleEditButtonPress}
-                >
-                  <PencilIcon size={14} color="#1E3A5F" />
-                  {/* <CustomText
-                    style={styles.actionText}
-                    color="#666"
-                    fontSize={14}
-                    type="medium"
-                  >
-                    Düzenle
-                  </CustomText> */}
-                </Pressable>
-              )}
-
-              {/* Delete button */}
+              {/* 3 noktalı menü ikonu */}
               <Pressable
-                style={styles.actionButton}
-                onPress={handleDeleteButtonPress}
+                ref={menuButtonRef}
+                // style={styles.menuButton}
+                onPress={openMoreMenu}
               >
-                <TrashIcon size={20} color="#1E3A5F" />
-              </Pressable>
-
-              <Pressable style={styles.addNote} onPress={handleAddNote}>
-                <PlusIcon size={12} color="#fff" />
-                {width >= 340 && (
-                  <CustomText
-                    style={styles.actionText}
-                    color="#fff"
-                    fontSize={14}
-                    type="regular"
-                  >
-                    {t("cardGoalTodo.addNote")}
-                  </CustomText>
-                )}
+                {/* <BookIcon size={20} color="#1E3A5F" /> */}
+                <MoreIcon size={20} color="#1E3A5F" />
               </Pressable>
             </View>
           </View>
         </View>
       </View>
 
-      {/* Bottom Button Container - Yeni eklenen kısım */}
+      {/* Bottom Button Container */}
       <View style={styles.buttonContainer}>
         <Pressable style={styles.detailsButton} onPress={handleDetailsPress}>
           <InfoIcon size={16} color="#1E3A5F" />
@@ -355,7 +344,70 @@ export default function CardGoalTodo({
         </Pressable>
       </View>
 
-      {/* Modals */}
+      {/* Açılır Menü Modal olarak */}
+      <Modal
+        isVisible={isMenuVisible}
+        animationIn={"slideInUp"}
+        animationOut={"slideOutDown"}
+        backdropColor="rgba(0, 0, 0, 0.8)"
+        onBackdropPress={() => setIsMenuVisible(false)}
+      >
+        <Pressable
+          style={styles.menuModalOverlay}
+          onPress={() => setIsMenuVisible(false)}
+        >
+          <View style={styles.dropdownMenu}>
+            <Pressable
+              style={[styles.menuItem, styles.lastMenuItem]}
+              onPress={handleAddNote}
+            >
+              <PlusIcon size={12} color="#1E3A5F" />
+              <CustomText
+                style={styles.menuItemText}
+                color="#1E3A5F"
+                fontSize={14}
+                type="regular"
+              >
+                {t("cardGoalTodo.addNote") || "Not Ekle"}
+              </CustomText>
+            </Pressable>
+
+            {category !== "Movie" && (
+              <Pressable
+                style={styles.menuItem}
+                onPress={handleEditButtonPress}
+              >
+                <PencilIcon size={14} color="#1E3A5F" />
+                <CustomText
+                  style={styles.menuItemText}
+                  color="#1E3A5F"
+                  fontSize={14}
+                  type="regular"
+                >
+                  {"Düzenle"}
+                </CustomText>
+              </Pressable>
+            )}
+
+            <Pressable
+              style={styles.menuItem}
+              onPress={handleDeleteButtonPress}
+            >
+              <TrashIcon size={16} color="#1E3A5F" />
+              <CustomText
+                style={styles.menuItemText}
+                color="#1E3A5F"
+                fontSize={14}
+                type="regular"
+              >
+                {"Sil"}
+              </CustomText>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Diğer Modaller */}
       <GoalDetailsModal
         visible={isDetailsModalVisible}
         onClose={() => setIsDetailsModalVisible(false)}
@@ -406,15 +458,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#E8EFF5",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: "#C6C6C6",
     marginBottom: 8,
     overflow: "hidden",
   },
@@ -460,36 +504,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     marginTop: width < 380 ? 10 : 0,
   },
-  addNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1E3A5F",
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 2,
-  },
-  actionButton: {
-    width: 34,
-    height: 34,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#E5EEFF",
-    borderRadius: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
-  },
-  actionText: {
-    marginLeft: 8,
-  },
   checkboxButton: {
     padding: 5,
   },
@@ -529,13 +543,50 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    gap: 5,
   },
-  iconButton: {
+  // Menü stilleri
+  menuButton: {
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#E5EEFF",
+    borderRadius: 6,
+  },
+  menuModalOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dropdownMenu: {
+    width: 150,
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E8EFF5",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8EFF5",
+  },
+  lastMenuItem: {
+    borderBottomWidth: 0,
+  },
+  menuItemText: {
     marginLeft: 10,
-    opacity: 0.7,
   },
-  // Yeni eklenen button container stilleri
+  // Bottom Button Container stilleri
   buttonContainer: {
     flexDirection: "row",
     width: "100%",

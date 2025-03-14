@@ -26,6 +26,8 @@ import PlusIcon from "@/components/icons/PlusIcon";
 
 import { useLanguage } from "@/app/LanguageContext";
 import SearchMovie from "@/components/SearchMovie";
+import TravelIcon from "@/components/icons/TravelIcon";
+import PlaneIcon from "@/components/icons/PlaneIcon";
 
 const { width } = Dimensions.get("window");
 const containerWidth = width > 768 ? width - 900 : width - 40;
@@ -134,52 +136,47 @@ export default function Goals() {
               onPress={() => handleCategoryPress(category.id)}
               key={category.id}
             >
-              {/* {category.id === "Movie" && (
+              {category.id === "Movie" && (
                 <MovieIcon
                   size={18}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#D3D3D3"}
+                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
                   variant={activeCategory === category.id ? "fill" : "fill"}
                 />
               )}
               {category.id === "Book" && (
                 <BookIcon
-                  size={22}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#D3D3D3"}
-                  variant={activeCategory === category.id ? "fill" : "fill"}
+                  size={18}
+                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
                 />
               )}
               {category.id === "Activity" && (
                 <ActivityIcon
-                  size={24}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#D3D3D3"}
-                  variant={activeCategory === category.id ? "fill" : "fill"}
+                  size={18}
+                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
                 />
               )}
               {category.id === "Place" && (
-                <CarIcon
-                  size={24}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#D3D3D3"}
-                  variant={activeCategory === category.id ? "fill" : "fill"}
+                <PlaneIcon
+                  size={18}
+                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
                 />
               )}
               {category.id === "Buy" && (
                 <WalletIcon
-                  size={22}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#D3D3D3"}
-                  variant={activeCategory === category.id ? "fill" : "fill"}
+                  size={18}
+                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
                 />
               )}
               {category.id === "Food" && (
                 <FoodIcon
-                  size={22}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#D3D3D3"}
-                  variant={activeCategory === category.id ? "fill" : "fill"}
+                  size={18}
+                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
                 />
-              )} */}
+              )}
               <CustomText
                 type={activeCategory === category.id ? "bold" : "regular"}
                 fontSize={12}
-                color={activeCategory === category.id ? "#1E3A5F" : "#D3D3D3"}
+                color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
               >
                 {category.label}
               </CustomText>
@@ -275,12 +272,23 @@ const styles = StyleSheet.create({
   },
   button: {
     width: buttonWidth,
-    height: 50,
+    height: 60,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 5,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: "#FDFDFD",
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E8EFF5",
+    gap: 4,
+    // shadowColor: "#000",
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 1,
+    // },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 2,
+    // elevation: 2,
   },
   buttonText: {
     alignItems: "center",
@@ -289,7 +297,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   activeButton: {
-    backgroundColor: "#E5EEFF",
+    backgroundColor: "#E8EFF5",
+    borderColor: "#CEDEEB",
   },
   headerContainer: {
     width: "100%",

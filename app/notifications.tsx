@@ -24,7 +24,8 @@ import {
 import { showMessage } from "react-native-flash-message";
 import NotificationRequestAcceptCard from "@/components/cards/NotificationRequestAcceptCard";
 import RecommendationCard from "@/components/cards/RecommendationCard";
-import { set } from "date-fns";
+
+import { useLanguage } from "@/app/LanguageContext";
 
 const { width } = Dimensions.get("window");
 
@@ -38,6 +39,9 @@ export default function NotificationPage() {
   const [isFriendRequestsLoading, setFriendRequestsLoading] = useState(false);
   const [isRecommendationsLoading, setRecommendationsLoading] = useState(false);
   const [isNotificationsLoading, setNotificationsLoading] = useState(false);
+
+  // language context
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -168,42 +172,52 @@ export default function NotificationPage() {
   }, [currentUserId]);
 
   useEffect(() => {
-    if (isFriendRequestsLoading && isRecommendationsLoading && isNotificationsLoading) {
+    if (
+      isFriendRequestsLoading &&
+      isRecommendationsLoading &&
+      isNotificationsLoading
+    ) {
       setLoading(false);
     }
-  }, [isFriendRequestsLoading, isRecommendationsLoading, isNotificationsLoading]);
+  }, [
+    isFriendRequestsLoading,
+    isRecommendationsLoading,
+    isNotificationsLoading,
+  ]);
 
- 
   // close recommendation modal
-  const handleCloseRecommendationCard = async (friendshipId: string, recommendationId: string) => {
+  const handleCloseRecommendationCard = async (
+    friendshipId: string,
+    recommendationId: string
+  ) => {
     try {
       const currentUserId = auth.currentUser?.uid;
       if (!currentUserId) {
         console.error("Kullanıcı oturum açmamış.");
         return;
       }
-  
+
       console.log("Current Method Inputs:", {
         currentUserId,
         friendshipId,
         recommendationId,
       });
-  
+
       // Mevcut recommendations state'ini logla
       console.log("Current Recommendations State:", recommendations);
-  
+
       // Belirli bir tavsiyeyi bul
       const specificRecommendation = recommendations.find(
         (rec: any) => rec.id === recommendationId
       );
-  
+
       console.log("Specific Recommendation:", specificRecommendation);
-  
+
       if (!specificRecommendation) {
         console.error("Tavsiye state'de bulunamadı.");
         return;
       }
-  
+
       const recommendationRef = doc(
         db,
         "friendships",
@@ -211,34 +225,37 @@ export default function NotificationPage() {
         "recommendations",
         recommendationId
       );
-  
+
       console.log("Recommendation Reference Path:", recommendationRef.path);
-  
+
       const recommendationDoc = await getDoc(recommendationRef);
-  
-      console.log("Recommendation Document Exists:", recommendationDoc.exists());
+
+      console.log(
+        "Recommendation Document Exists:",
+        recommendationDoc.exists()
+      );
       console.log("Recommendation Document Data:", recommendationDoc.data());
-  
+
       if (!recommendationDoc.exists()) {
         console.error("Tavsiye belgesi bulunamadı.");
-  
+
         // State'den de kaldır
         setRecommendations((prev: any) =>
           prev.filter((rec: any) => rec.id !== recommendationId)
         );
-  
+
         return;
       }
-  
+
       const recommendationData = recommendationDoc.data();
-  
+
       // Firestore'daki belgeyi güncelle
       await updateDoc(recommendationRef, {
         isSeen: true,
       });
-  
+
       console.log("Firestore belgesi başarıyla güncellendi.");
-  
+
       // State'i güncelle
       setRecommendations((prev: any) =>
         prev.filter((rec: any) => rec.id !== recommendationId)
@@ -255,7 +272,9 @@ export default function NotificationPage() {
 
   const handleRequestAction = (requestId: string) => {
     // Remove the request from the list
-    setFriendRequests(friendRequests.filter((req: any) => req.id !== requestId));
+    setFriendRequests(
+      friendRequests.filter((req: any) => req.id !== requestId)
+    );
   };
 
   const handleRemoveNotification = async (notificationId: string) => {
@@ -286,6 +305,10 @@ export default function NotificationPage() {
     }
   };
 
+  const filteredRecommendations = recommendations.filter(
+    (recommendation: any) => !recommendation.isSeen && !recommendation.isAdded
+  );
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -294,10 +317,9 @@ export default function NotificationPage() {
         </View>
       ) : friendRequests.length > 0 ||
         notifications.length > 0 ||
-        recommendations.length > 0 ? (
+        filteredRecommendations.length > 0 ? (
         <ScrollView
           style={styles.scrollContainer}
-          // contentContainerStyle={styles.scrollContentContainer}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.sectionContainer}>
@@ -321,30 +343,26 @@ export default function NotificationPage() {
             ))}
           </View>
 
-            {/* Tavsiyeler */}
-            <View style={styles.sectionContainer}>
-              {recommendations
-                .filter(
-                  (recommendation: any) =>
-                    !recommendation.isSeen && !recommendation.isAdded
-                )
-                .map((recommendation: any) => (
-                  <RecommendationCard
-                    key={recommendation.id}
-                    goal={recommendation}
-                    onClose={() =>
-                      handleCloseRecommendationCard(
-                        recommendation.friendshipId,
-                        recommendation.id)
-                    }
-                  />
-                ))}
-            </View>
+          {/* Tavsiyeler */}
+          <View style={styles.sectionContainer}>
+            {filteredRecommendations.map((recommendation: any) => (
+              <RecommendationCard
+                key={recommendation.id}
+                goal={recommendation}
+                onClose={() =>
+                  handleCloseRecommendationCard(
+                    recommendation.friendshipId,
+                    recommendation.id
+                  )
+                }
+              />
+            ))}
+          </View>
         </ScrollView>
       ) : (
         <View style={styles.emptyContainer}>
           <CustomText type="medium" fontSize={14} color="#666">
-            Şu anda bekleyen bildiriminiz bulunmamaktadır.
+            {t("notificationPage.noNotifications")}
           </CustomText>
         </View>
       )}
@@ -368,12 +386,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionContainer: {
-    paddingVertical: 20,
-  },
-  sectionTitle: {
-    alignSelf: "flex-start",
-    marginVertical: 20,
-    marginLeft: 20,
+    paddingVertical: 10,
   },
   emptyContainer: {
     flex: 1,
