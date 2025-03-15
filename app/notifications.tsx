@@ -48,6 +48,7 @@ export default function NotificationPage() {
 
     // 1️⃣ Arkadaşlık istekleri için snapshot listener
     const friendRequestsRef = collection(db, "friendRequests");
+    // İndeks gerekliliğini önlemek için iki ayrı sorgu kullanma yöntemi:
     const friendRequestsQuery = query(
       friendRequestsRef,
       where("receiverId", "==", currentUserId),
@@ -65,6 +66,13 @@ export default function NotificationPage() {
           });
         });
 
+        // Frontend'de sıralama yapalım
+        requests.sort((a: any, b: any) => {
+          const dateA = a.createdAt?.toDate?.() || a.createdAt || new Date(0);
+          const dateB = b.createdAt?.toDate?.() || b.createdAt || new Date(0);
+          return dateB - dateA; // Azalan sıralama (en yeni en üstte)
+        });
+
         setFriendRequests(requests);
         setFriendRequestsLoading(true);
       },
@@ -74,7 +82,7 @@ export default function NotificationPage() {
           message: "Arkadaşlık istekleri yüklenirken bir hata oluştu!",
           type: "danger",
         });
-        // setFriendRequestsLoading(false);
+        setFriendRequestsLoading(true); // Yükleme tamamlandı olarak işaretleyelim ki UI akışı devam etsin
       }
     );
 
@@ -96,6 +104,13 @@ export default function NotificationPage() {
           });
         });
 
+        // Frontend'de sıralama yapalım
+        notificationsData.sort((a: any, b: any) => {
+          const dateA = a.createdAt?.toDate?.() || a.createdAt || new Date(0);
+          const dateB = b.createdAt?.toDate?.() || b.createdAt || new Date(0);
+          return dateB - dateA; // Azalan sıralama (en yeni en üstte)
+        });
+
         setNotifications(notificationsData);
         setNotificationsLoading(true);
       },
@@ -105,7 +120,7 @@ export default function NotificationPage() {
           message: "Bildirimler yüklenirken bir hata oluştu!",
           type: "danger",
         });
-        // setLoading(false);
+        setNotificationsLoading(true); // Yükleme tamamlandı olarak işaretleyelim ki UI akışı devam etsin
       }
     );
 
@@ -147,10 +162,15 @@ export default function NotificationPage() {
           });
         }
 
-        // console.log("recommendationsData:", recommendationsData);
+        // Frontend'de sıralama yapalım
+        recommendationsData.sort((a: any, b: any) => {
+          const dateA = a.createdAt?.toDate?.() || a.createdAt || new Date(0);
+          const dateB = b.createdAt?.toDate?.() || b.createdAt || new Date(0);
+          return dateB - dateA; // Azalan sıralama (en yeni en üstte)
+        });
+
         setRecommendations(recommendationsData);
         console.log("recommendationsData:", recommendationsData);
-        // console.log("recommendationsData:", recommendations);
       } catch (error) {
         console.error("Error loading recommendations:", error);
         showMessage({
@@ -309,54 +329,71 @@ export default function NotificationPage() {
     (recommendation: any) => !recommendation.isSeen && !recommendation.isAdded
   );
 
+  // Tüm bildirimleri birleştirip createdAt'e göre sıralama
+  // Tüm verileri tek bir diziye topluyoruz
+  const mergedNotifications = [
+    ...friendRequests.map((item: any) => ({ ...item, type: "friendRequest" })),
+    ...notifications.map((item: any) => ({ ...item, type: "notification" })),
+    ...filteredRecommendations.map((item: any) => ({
+      ...item,
+      type: "recommendation",
+    })),
+  ];
+
+  // `createdAt` değerine göre sıralıyoruz (En yeni en üstte olacak şekilde)
+  const sortedNotifications = mergedNotifications.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
   return (
     <View style={styles.container}>
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#1E3A5F" />
         </View>
-      ) : friendRequests.length > 0 ||
-        notifications.length > 0 ||
-        filteredRecommendations.length > 0 ? (
+      ) : mergedNotifications.length > 0 ? (
         <ScrollView
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.sectionContainer}>
-            {friendRequests.map((request: any) => (
-              <FriendRequestCard
-                key={request.id}
-                request={request}
-                onAccept={() => handleRequestAction(request.id)}
-                onReject={() => handleRequestAction(request.id)}
-              />
-            ))}
-          </View>
-
-          <View style={styles.sectionContainer}>
-            {notifications.map((notification: any) => (
-              <NotificationRequestAcceptCard
-                key={notification.id}
-                item={notification}
-                onRead={() => handleRemoveNotification(notification.id)}
-              />
-            ))}
-          </View>
-
-          {/* Tavsiyeler */}
-          <View style={styles.sectionContainer}>
-            {filteredRecommendations.map((recommendation: any) => (
-              <RecommendationCard
-                key={recommendation.id}
-                goal={recommendation}
-                onClose={() =>
-                  handleCloseRecommendationCard(
-                    recommendation.friendshipId,
-                    recommendation.id
-                  )
-                }
-              />
-            ))}
+            {sortedNotifications.map((item: any) => {
+              switch (item.type) {
+                case "friendRequest":
+                  return (
+                    <FriendRequestCard
+                      key={item.id}
+                      request={item}
+                      onAccept={() => handleRequestAction(item.id)}
+                      onReject={() => handleRequestAction(item.id)}
+                    />
+                  );
+                case "notification":
+                  return (
+                    <NotificationRequestAcceptCard
+                      key={item.id}
+                      item={item}
+                      onRead={() => handleRemoveNotification(item.id)}
+                    />
+                  );
+                case "recommendation":
+                  return (
+                    <RecommendationCard
+                      key={item.id}
+                      goal={item}
+                      onClose={() =>
+                        handleCloseRecommendationCard(
+                          item.friendshipId,
+                          item.id
+                        )
+                      }
+                    />
+                  );
+                default:
+                  return null;
+              }
+            })}
           </View>
         </ScrollView>
       ) : (

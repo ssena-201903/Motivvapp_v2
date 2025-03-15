@@ -45,7 +45,6 @@ export default function RecommendationCard({
     console.log("Add to personal list");
   };
 
-  // console.log("Goal: ", goal);
   return (
     <View style={styles.card}>
       <Pressable style={styles.closeButton} onPress={() => onClose(goal.id)}>
@@ -170,7 +169,7 @@ export default function RecommendationCard({
           type="regular"
           fontSize={14}
           color="#333"
-          numberOfLines={3} 
+          numberOfLines={3}
           ellipsizeMode="tail"
         >
           {goal.comment}

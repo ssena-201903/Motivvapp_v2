@@ -175,7 +175,7 @@ export default function Goals() {
               )}
               <CustomText
                 type={activeCategory === category.id ? "bold" : "regular"}
-                fontSize={12}
+                fontSize={10}
                 color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
               >
                 {category.label}
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#E8EFF5",
-    gap: 4,
+    gap: 6,
     // shadowColor: "#000",
     // shadowOffset: {
     //   width: 0,

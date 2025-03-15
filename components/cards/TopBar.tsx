@@ -14,6 +14,9 @@ import NotificationIcon from "@/components/icons/NotificationIcon";
 import MenuIcon from "@/components/icons/MenuIcon";
 import SparklesIcon from "@/components/icons/SparklesIcon";
 
+import { db } from "@/firebase.config";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+
 import { useLanguage } from "@/app/LanguageContext";
 
 const { width } = Dimensions.get("window");
@@ -30,13 +33,107 @@ export default function TopBar({ onDiamondPress, onDatePress }: Props) {
   const [dateDayName, setDateDayName] = useState<string>("");
   const router = useRouter();
 
+  const [unreadFriendRequests, setUnreadFriendRequests] = useState<number>(0);
+  const [unreadRecommendations, setUnreadRecommendations] = useState<number>(0);
+  const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
+
   // language context
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    if (!userId) return;
+  
+    // 📌 1️⃣ Okunmamış normal bildirimler (notifications)
+    const notificationsRef = collection(db, "notifications");
+    const unreadNotificationsQuery = query(
+      notificationsRef,
+      where("relatedUserId", "==", userId),
+    );
+  
+    const unsubscribeNotifications = onSnapshot(unreadNotificationsQuery, (snapshot) => {
+      setUnreadNotifications(snapshot.size);
+    }, (error) => {
+      console.error("Notifications listener error:", error);
+    });
+  
+    // 📌 2️⃣ Okunmamış arkadaşlık istekleri (friendRequests)
+    const friendRequestsRef = collection(db, "friendRequests");
+    const unreadFriendRequestsQuery = query(
+      friendRequestsRef,
+      where("receiverId", "==", userId),
+    );
+  
+    const unsubscribeFriendRequests = onSnapshot(unreadFriendRequestsQuery, (snapshot) => {
+      setUnreadFriendRequests(snapshot.size);
+    }, (error) => {
+      console.error("Friend requests listener error:", error);
+    });
+  
+    // 📌 3️⃣ Okunmamış tavsiyeler (recommendations)
+    const friendshipsRef = collection(db, "friendships");
+    const friendshipsQuery = query(
+      friendshipsRef,
+      where("participants", "array-contains", userId)
+    );
+  
+    const unsubscribeFriendships = onSnapshot(friendshipsQuery, (friendshipsSnapshot) => {
+      let unsubscribers: (() => void)[] = [];
+      
+      // Her değişiklikte önceki dinleyicileri temizle ve yeniden başlat
+      unsubscribers.forEach(unsub => unsub());
+      unsubscribers = [];
+      
+      let recommendationListeners = friendshipsSnapshot.docs.map(friendshipDoc => {
+        const recommendationsRef = collection(friendshipDoc.ref, "recommendations");
+        const recommendationsQuery = query(
+          recommendationsRef,
+          where("receiverId", "==", userId),
+          where("isSeen", "==", false)
+        );
+        
+        return onSnapshot(recommendationsQuery, (recommendationsSnapshot) => {
+          // Tüm tavsiye dinleyicilerinden gelen verileri topla
+          const totalRecommendations = friendshipsSnapshot.docs.reduce((total, doc) => {
+            const recommendationsCollection = collection(doc.ref, "recommendations");
+            const recommendationsQuery = query(
+              recommendationsCollection,
+              where("receiverId", "==", userId),
+              where("isSeen", "==", false)
+            );
+            
+            // Bu dinleyiciden gelen veriyi al
+            const recommendations = recommendationsSnapshot.docs
+              .filter(recDoc => recDoc.ref.parent.parent?.id === doc.id)
+              .length;
+              
+            return total + recommendations;
+          }, 0);
+          
+          setUnreadRecommendations(totalRecommendations);
+        }, (error) => {
+          console.error("Recommendations listener error:", error);
+        });
+      });
+      
+      // Dinleyicileri kaydet
+      unsubscribers.push(...recommendationListeners);
+      
+      return () => {
+        unsubscribers.forEach(unsub => unsub());
+      };
+    }, (error) => {
+      console.error("Friendships listener error:", error);
+    });
+  
+    return () => {
+      unsubscribeNotifications();
+      unsubscribeFriendRequests();
+      unsubscribeFriendships();
+    };
+  }, [userId]);
 
   const [isProfileModalVisible, setIsProfileModalVisible] =
     useState<boolean>(false);
-
-  const handleToast = () => {};
 
   const handleNotificationsPress = () => {
     router.push("/notifications");
@@ -90,18 +187,21 @@ export default function TopBar({ onDiamondPress, onDatePress }: Props) {
     getCurrentDate();
   }, []);
 
+  const totalUnread =
+    unreadNotifications + unreadFriendRequests + unreadRecommendations;
+
   return (
     <View style={styles.container}>
       <Pressable style={styles.date} onPress={onDatePress}>
-        <CustomText 
+        <CustomText
           style={styles.dateMonth}
           color="#1E3A5F"
           type="bold"
           fontSize={24}
-          >
+        >
           {dateMonth} {dateDay}
         </CustomText>
-        <CustomText 
+        <CustomText
           style={styles.dateDay}
           color="#1E3A5F"
           type="medium"
@@ -117,15 +217,13 @@ export default function TopBar({ onDiamondPress, onDatePress }: Props) {
         >
           <NotificationIcon size={24} color="#f8f8f8" variant="fill" />
         </TouchableOpacity>
-        <View style={styles.notificationsDot}>
-          <CustomText 
-          color="#1E3A5F"
-          type= "medium"
-          fontSize={12}
-          >
-            3
-          </CustomText>
-        </View>
+        {totalUnread > 0 && (
+          <View style={styles.notificationsDot}>
+            <CustomText color="#1E3A5F" type="medium" fontSize={12}>
+              {totalUnread}
+            </CustomText>
+          </View>
+        )}
         <TouchableOpacity style={styles.topMenuItem} onPress={onDiamondPress}>
           <SparklesIcon size={24} color="#f8f8f8" variant="fill" />
         </TouchableOpacity>

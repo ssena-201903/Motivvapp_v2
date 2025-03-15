@@ -347,8 +347,8 @@ export default function CardGoalTodo({
       {/* Açılır Menü Modal olarak */}
       <Modal
         isVisible={isMenuVisible}
-        animationIn={"slideInUp"}
-        animationOut={"slideOutDown"}
+        animationIn={"fadeIn"}
+        animationOut={"fadeOut"}
         backdropColor="rgba(0, 0, 0, 0.8)"
         onBackdropPress={() => setIsMenuVisible(false)}
       >
