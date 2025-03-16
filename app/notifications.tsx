@@ -134,7 +134,6 @@ export default function NotificationPage() {
         );
 
         const friendshipsSnapshot = await getDocs(friendshipsQuery);
-        console.log("friendshipsSnapshot:", friendshipsSnapshot);
         const recommendationsData: any = [];
 
         for (const friendshipDoc of friendshipsSnapshot.docs) {
@@ -206,35 +205,11 @@ export default function NotificationPage() {
   ]);
 
   // close recommendation modal
-  const handleCloseRecommendationCard = async (
-    friendshipId: string,
-    recommendationId: string
-  ) => {
+  const handleCloseRecommendationCard = async (recommendationId: string, friendshipId: string) => {
     try {
       const currentUserId = auth.currentUser?.uid;
       if (!currentUserId) {
         console.error("Kullanıcı oturum açmamış.");
-        return;
-      }
-
-      console.log("Current Method Inputs:", {
-        currentUserId,
-        friendshipId,
-        recommendationId,
-      });
-
-      // Mevcut recommendations state'ini logla
-      console.log("Current Recommendations State:", recommendations);
-
-      // Belirli bir tavsiyeyi bul
-      const specificRecommendation = recommendations.find(
-        (rec: any) => rec.id === recommendationId
-      );
-
-      console.log("Specific Recommendation:", specificRecommendation);
-
-      if (!specificRecommendation) {
-        console.error("Tavsiye state'de bulunamadı.");
         return;
       }
 
@@ -246,35 +221,20 @@ export default function NotificationPage() {
         recommendationId
       );
 
-      console.log("Recommendation Reference Path:", recommendationRef.path);
-
       const recommendationDoc = await getDoc(recommendationRef);
 
-      console.log(
-        "Recommendation Document Exists:",
-        recommendationDoc.exists()
-      );
-      console.log("Recommendation Document Data:", recommendationDoc.data());
-
       if (!recommendationDoc.exists()) {
-        console.error("Tavsiye belgesi bulunamadı.");
-
         // State'den de kaldır
         setRecommendations((prev: any) =>
           prev.filter((rec: any) => rec.id !== recommendationId)
         );
-
         return;
       }
-
-      const recommendationData = recommendationDoc.data();
 
       // Firestore'daki belgeyi güncelle
       await updateDoc(recommendationRef, {
         isSeen: true,
       });
-
-      console.log("Firestore belgesi başarıyla güncellendi.");
 
       // State'i güncelle
       setRecommendations((prev: any) =>
@@ -282,9 +242,24 @@ export default function NotificationPage() {
       );
     } catch (error) {
       console.error("Tavsiye kartı kapatılırken hata oluştu:", error);
-      console.error("Hata Detayları:", JSON.stringify(error, null, 2));
       showMessage({
         message: "Tavsiye kartı kapatılırken hata oluştu!",
+        type: "danger",
+      });
+    }
+  };
+
+  // Yeni eklenen handleAddList methodu
+  const handleAddList = async (recommendationId: string, friendshipId: string) => {
+    try {
+      // State'den recommendation'ı kaldır - kullanıcının listesine eklendiği için
+      setRecommendations((prev: any) =>
+        prev.filter((rec: any) => rec.id !== recommendationId)
+      );
+    } catch (error) {
+      console.error("Tavsiye listeye eklenirken hata oluştu:", error);
+      showMessage({
+        message: "Tavsiye listeye eklenirken hata oluştu!",
         type: "danger",
       });
     }
@@ -298,8 +273,6 @@ export default function NotificationPage() {
   };
 
   const handleRemoveNotification = async (notificationId: string) => {
-    // console.log("Silme işlemi başlatıldı. Notification ID:", notificationId);
-
     try {
       const notificationRef = doc(db, "notifications", notificationId);
 
@@ -310,14 +283,12 @@ export default function NotificationPage() {
       }
 
       await deleteDoc(notificationRef);
-      // console.log("Bildirim Firestore'dan başarıyla silindi.");
 
       // State'ten de kaldır
       setNotifications((prevNotifications) =>
         prevNotifications.filter((notif: any) => notif.id !== notificationId)
       );
     } catch (error) {
-      // console.error("Bildirim silinirken hata oluştu:", error);
       showMessage({
         message: "Bildirim silinirken bir hata oluştu!",
         type: "danger",
@@ -382,12 +353,8 @@ export default function NotificationPage() {
                     <RecommendationCard
                       key={item.id}
                       goal={item}
-                      onClose={() =>
-                        handleCloseRecommendationCard(
-                          item.friendshipId,
-                          item.id
-                        )
-                      }
+                      onClose={() => handleCloseRecommendationCard(item.id, item.friendshipId)}
+                      onAdd={() => handleAddList(item.id, item.friendshipId)}
                     />
                   );
                 default:

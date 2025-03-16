@@ -8,18 +8,24 @@ import { tr } from "date-fns/locale";
 import CustomButton from "@/components/CustomButton";
 import GoalDetailsModal from "@/components/modals/GoalDetailsModal";
 
+import { auth, db } from "@/firebase.config";
+import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
+
 import { useLanguage } from "@/app/LanguageContext";
+import { showMessage } from "react-native-flash-message";
 
 const { width } = Dimensions.get("window");
 
 type RecommendationCardProps = {
   goal: any;
   onClose: (id: string) => void;
+  onAdd: (data: any) => void;
 };
 
 export default function RecommendationCard({
   goal,
   onClose,
+  onAdd,
 }: RecommendationCardProps) {
   const [isDetailsModalVisible, setIsDetailsModalVisible] =
     useState<boolean>(false);
@@ -41,8 +47,71 @@ export default function RecommendationCard({
     setIsDetailsModalVisible(true);
   };
 
-  const handleAddPersonalList = () => {
-    console.log("Add to personal list");
+  const handleAddPersonalList = async () => {
+    try {
+      const currentUserId = auth.currentUser?.uid;
+      if (!currentUserId) return;
+  
+      const userGoalRef = collection(db, "users", currentUserId, "goals");
+  
+      const newGoal = {
+        name: goal.name,
+        category: goal.category,
+  
+        // Add Book specific fields
+        ...(goal.category === "Book" && {
+          readingStatus: "not started",
+          author: goal.author,
+        }),
+  
+        // Add Movie specific fields
+        ...(goal.category === "Movie" && {
+          director: goal.director,
+          actors: goal.actors,
+          genres: goal.genres,
+          imdbRate: goal.imdbRate,
+          plot: goal.plot,
+          runtime: goal.runtime,
+          start_year: goal.start_year,
+          type: goal.type,
+          posterUrl: goal.posterUrl,
+        }),
+  
+        // Add Series specific fields if type is series
+        ...(goal.type === "series" && {
+          totalSeasons: goal.totalSeasons,
+        }),
+  
+        rating: 0,
+        createdAt: new Date(),
+        finishedAt: null,
+        notes: [],
+        isDone: false,
+        isAdvice: false,
+      };
+  
+      await addDoc(userGoalRef, newGoal);
+      showMessage({ message: "Kendi hedef listene başarıyla eklendi", type: "success" });
+  
+      const recommendationRef = doc(
+        db,
+        "friendships",
+        goal.friendshipId,
+        "recommendations",
+        goal.id
+      );
+  
+      // Update isAdded field to true
+      await updateDoc(recommendationRef, {
+        isAdded: true,
+      });
+  
+      // onAdd prop'unu çağırarak NotificationPage'e bilgi ver
+      onAdd({ id: goal.id, friendshipId: goal.friendshipId });
+    } catch (error) {
+      console.error("Error adding personal goal: ", error);
+      showMessage({ message: "Tavsiye ekleme hatası", type: "danger" });
+    }
   };
 
   return (
@@ -178,14 +247,14 @@ export default function RecommendationCard({
 
       <View style={styles.buttonContainer}>
         <CustomButton
-          label="Detaylar"
+          label={t("recommendation.detailsButtonText")}
           onPress={handleDetailsPress}
           width={"50%"}
           height={40}
           variant="cancel"
         />
         <CustomButton
-          label="Listene Ekle"
+          label={t("recommendation.saveButtonText")}
           onPress={handleAddPersonalList}
           width={"50%"}
           height={40}

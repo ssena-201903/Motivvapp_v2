@@ -88,7 +88,8 @@ export default function TopBar({ onDiamondPress, onDatePress }: Props) {
         const recommendationsQuery = query(
           recommendationsRef,
           where("receiverId", "==", userId),
-          where("isSeen", "==", false)
+          where("isSeen", "==", false),
+          where("isAdded", "==", false)
         );
         
         return onSnapshot(recommendationsQuery, (recommendationsSnapshot) => {

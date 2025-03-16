@@ -21,6 +21,8 @@ import EditGoalModal from "@/components/modals/EditGoalModal";
 import FriendsListModal from "../modals/FriendsListModal";
 import BookIcon from "../icons/BookIcon";
 import MoreIcon from "../icons/MoreIcon";
+import PeopleIcon from "../icons/PeopleIcon";
+import { showMessage } from "react-native-flash-message";
 
 const { width } = Dimensions.get("window");
 
@@ -197,6 +199,11 @@ export default function CardGoalTodo({
   };
 
   const handleAdvicePress = (event: any) => {
+    if (goal.rating === 0) {
+      showMessage({ message: t("alerts.emptyRating"), type: "warning" });
+      return;
+    }
+
     event.stopPropagation();
     setIsFriendsModalVisible(true);
     setIsMenuVisible(false);
@@ -320,26 +327,26 @@ export default function CardGoalTodo({
       {/* Bottom Button Container */}
       <View style={styles.buttonContainer}>
         <Pressable style={styles.detailsButton} onPress={handleDetailsPress}>
-          <InfoIcon size={16} color="#1E3A5F" />
+          <InfoIcon size={20} color="#1E3A5F" variant={isDone ? "fill" : "outlined"} />
           <CustomText
             style={styles.buttonText}
             color="#1E3A5F"
             fontSize={14}
             type="medium"
           >
-            Detaylar
+            {t("cardGoalTodo.details")}
           </CustomText>
         </Pressable>
 
         <Pressable style={styles.recommendButton} onPress={handleAdvicePress}>
-          <ThumbsUpIcon size={16} color="#1E3A5F" variant="outlined" />
+          <PeopleIcon size={20} color="#1E3A5F" variant={isDone ? "fill" : "outlined"} />
           <CustomText
             style={styles.buttonText}
             color="#1E3A5F"
             fontSize={14}
             type="medium"
           >
-            Tavsiye Et
+            {t("cardGoalTodo.recommend")}
           </CustomText>
         </Pressable>
       </View>
@@ -361,14 +368,15 @@ export default function CardGoalTodo({
               style={[styles.menuItem, styles.lastMenuItem]}
               onPress={handleAddNote}
             >
-              <PlusIcon size={12} color="#1E3A5F" />
+              <PlusIcon size={14} color="#1E3A5F" />
+
               <CustomText
                 style={styles.menuItemText}
                 color="#1E3A5F"
                 fontSize={14}
-                type="regular"
+                type="semibold"
               >
-                {t("cardGoalTodo.addNote") || "Not Ekle"}
+                {t("cardGoalTodo.addNote")}
               </CustomText>
             </Pressable>
 
@@ -378,13 +386,14 @@ export default function CardGoalTodo({
                 onPress={handleEditButtonPress}
               >
                 <PencilIcon size={14} color="#1E3A5F" />
+
                 <CustomText
                   style={styles.menuItemText}
                   color="#1E3A5F"
                   fontSize={14}
-                  type="regular"
+                  type="semibold"
                 >
-                  {"Düzenle"}
+                  {t("cardGoalTodo.edit")}
                 </CustomText>
               </Pressable>
             )}
@@ -393,14 +402,15 @@ export default function CardGoalTodo({
               style={styles.menuItem}
               onPress={handleDeleteButtonPress}
             >
-              <TrashIcon size={16} color="#1E3A5F" />
+              <TrashIcon size={14} color="#1E3A5F" />
+
               <CustomText
                 style={styles.menuItemText}
                 color="#1E3A5F"
                 fontSize={14}
-                type="regular"
+                type="medium"
               >
-                {"Sil"}
+                {t("cardGoalTodo.delete")}
               </CustomText>
             </Pressable>
           </View>
@@ -457,13 +467,23 @@ const styles = StyleSheet.create({
     width: width > 768 ? width - 900 : width - 40,
     backgroundColor: "white",
     borderRadius: 8,
+    // borderWidth: 1,
+    // borderColor: "#C6C6C6",
     borderWidth: 1,
-    borderColor: "#C6C6C6",
-    marginBottom: 8,
+    borderColor: "#DBDADA",
+    marginBottom: 10,
     overflow: "hidden",
+    // shadowColor: "#000",
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 1,
+    // },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 2,
+    // elevation: 2,
   },
   completedContainer: {
-    backgroundColor: "#E5EEFF",
+    backgroundColor: "#E8F1F7",
     borderColor: "#CEDEEB",
   },
   container: {
@@ -559,7 +579,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dropdownMenu: {
-    width: 150,
+    width: 250,
+    paddingVertical: 8,
     backgroundColor: "white",
     borderRadius: 8,
     borderWidth: 1,
@@ -576,9 +597,15 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#E8EFF5",
+    backgroundColor: "#E8EFF5",
+    marginHorizontal: 8,
+    marginVertical: 4,
+    borderRadius: 4,
+    padding: 8,
   },
   lastMenuItem: {
     borderBottomWidth: 0,
@@ -591,7 +618,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     width: "100%",
     borderTopWidth: 1,
-    borderTopColor: "#E8EFF5",
+    borderTopColor: "#DBDADA",
   },
   detailsButton: {
     flexDirection: "row",
@@ -600,7 +627,7 @@ const styles = StyleSheet.create({
     width: "50%",
     paddingVertical: 12,
     borderRightWidth: 1,
-    borderRightColor: "#E8EFF5",
+    borderRightColor: "#DBDADA",
   },
   recommendButton: {
     flexDirection: "row",

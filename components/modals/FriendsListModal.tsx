@@ -89,7 +89,7 @@ export default function FriendsListModal({
     } catch (error) {
       console.error("Arkadaş getirme hatası:", error);
       showMessage({
-        message: "Arkadaşları yüklenirken bir hata oluştu!",
+        message: t("alerts.errorFetchingFriends"),
         type: "warning",
       });
     } finally {
@@ -113,7 +113,15 @@ export default function FriendsListModal({
 
       if (selectedFriends.length === 0) {
         showMessage({
-          message: "En az bir arkadaş seçmelisiniz!",
+          message: t("alerts.selectFriend"),
+          type: "danger",
+        });
+        return;
+      }
+
+      if(!recommendComment.trim()) {
+        showMessage({
+          message: t("alerts.emptyRecommendationComment"),
           type: "danger",
         });
         return;
@@ -184,7 +192,7 @@ export default function FriendsListModal({
       }
 
       showMessage({
-        message: "Arkadaşlarına tavsiyen gönderildi!",
+        message: t("message.sendRecommendation"),
         type: "success",
       });
 
@@ -192,7 +200,7 @@ export default function FriendsListModal({
     } catch (error) {
       console.error("Tavsiye gönderme hatası:", error);
       showMessage({
-        message: "Tavsiye gönderilirken bir hata oluştu!",
+        message: t("alerts.errorSendingRecommendation"),
         type: "danger",
       });
     }
