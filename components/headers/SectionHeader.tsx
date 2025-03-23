@@ -1,4 +1,4 @@
-import { View, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Dimensions, TouchableOpacity, Pressable } from "react-native";
 import { CustomText } from "@/CustomText";
 import { useEffect, useRef } from "react";
 import { Animated } from "react-native";
@@ -17,20 +17,35 @@ type Props = {
 const { width } = Dimensions.get("screen");
 
 export default function SectionHeader({ variant, text, percentDone, id }: Props) {
-  const progressWidth = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0.6)).current;
 
   // language context
   const { t } = useLanguage();
 
   useEffect(() => {
-    Animated.timing(progressWidth, {
-      toValue: percentDone, // setting animation to percentDone
-      duration: 500,
+    Animated.timing(progressAnim, {
+      toValue: percentDone,
+      duration: 800,
       useNativeDriver: false,
     }).start();
   }, [percentDone]);
 
   const handlePress = () => {
+    // Animate opacity for feedback
+    Animated.sequence([
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0.6,
+        duration: 200,
+        useNativeDriver: false,
+      })
+    ]).start();
+
     if (variant === "home") {
       if (id === "goals") {
         router.push("/goals");
@@ -42,27 +57,73 @@ export default function SectionHeader({ variant, text, percentDone, id }: Props)
     }
   };
 
+  // Calculate progress bar color based on percentage
+  // const getProgressColor = () => {
+  //   if (percentDone < 30) return "#FF6B6B";  // Red for low progress
+  //   if (percentDone < 70) return "#FFD166";  // Yellow for medium progress
+  //   return "#06D6A0";  // Green for high progress
+  // };
+
+  const progressBarWidth = progressAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ["0%", "100%"],
+  });
+
+  // const progressColor = getProgressColor();
+
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <TouchableOpacity style={styles.header} onPress={handlePress}>
+      <TouchableOpacity 
+        style={styles.labelContainer} 
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
         <CustomText 
-          color="#f8f8f8"
-          fontSize={14}
+          color="#1E3A5F"
+          fontSize={16}
           type="semibold"
+          style={styles.labelText}
         >
           {text}
         </CustomText>
+        
         {variant === "home" && (
-          <ArrowIcon size={10} color="#f8f8f8" variant="right" />
+          <View style={styles.seeAllContainer}>
+            <CustomText
+              color="#666"
+              fontSize={12}
+              type="medium"
+              style={styles.seeAllText}
+            >
+              Hepsini Gör
+            </CustomText>
+            <View style={styles.arrowContainer}>
+              <ArrowIcon size={12} color="#666" variant="right" />
+            </View>
+          </View>
         )}
       </TouchableOpacity>
 
-      {/* Progress Bar */}
-      <View style={styles.progressBarContainer}>
+      <View style={styles.progressContainer}>
+        <View style={styles.progressMetadata}>
+          <CustomText 
+            color="#888"
+            fontSize={12}
+            type="medium"
+          >
+            {Math.round(percentDone)}%
+          </CustomText>
+        </View>
+        
         <View style={styles.progressBarBackground}>
           <Animated.View
-            style={[styles.progressBar, { width: `${percentDone}%` }]} // Responsive progress bar
+            style={[
+              styles.progressBar, 
+              { 
+                width: progressBarWidth,
+                backgroundColor: "#FF6B6B",
+              }
+            ]}
           />
         </View>
       </View>
@@ -72,43 +133,46 @@ export default function SectionHeader({ variant, text, percentDone, id }: Props)
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    alignItems: "center",
     width: "100%",
-    marginBottom: 20,
-    marginTop: 20,
+    marginVertical: 16,
   },
-  header: {
-    flex: 3, 
+  labelContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#1E3A5F",
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    borderRadius: 4,
+    marginBottom: 8,
   },
-  headerText: {
-    color: "#f8f8f8",
-    fontSize: 14,
-    fontWeight: "700",
+  labelText: {
+    letterSpacing: 0.2,
   },
-  progressBarContainer: {
-    flex: 7,
-    height: 10,
-    borderRadius: 5,
-    overflow: "hidden",
-    marginLeft: 20,
+  seeAllContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    opacity: 0.8,
+  },
+  seeAllText: {
+    marginRight: 4,
+  },
+  arrowContainer: {
+    opacity: 0.6,
+  },
+  progressContainer: {
+    width: "100%",
+  },
+  progressMetadata: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 4,
   },
   progressBarBackground: {
     width: "100%",
-    height: "100%",
-    backgroundColor: "#f8f8f8",
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
+    height: 6,
+    borderRadius: 6,
+    backgroundColor: "#E8EFF5",
+    overflow: "hidden",
   },
   progressBar: {
     height: "100%",
-    backgroundColor: "#FFA38F", // I can change later
+    borderRadius: 6,
   },
 });

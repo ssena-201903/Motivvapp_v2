@@ -4,6 +4,8 @@ import {
   Dimensions,
   Pressable,
   TouchableOpacity,
+  StatusBar,
+  Platform,
 } from "react-native";
 import { CustomText } from "@/CustomText";
 import { router, useRouter } from "expo-router";
@@ -18,6 +20,11 @@ import { db } from "@/firebase.config";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 
 import { useLanguage } from "@/app/LanguageContext";
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring
+} from "react-native-reanimated";
 
 const { width } = Dimensions.get("window");
 
@@ -36,6 +43,10 @@ export default function TopBar({ onDiamondPress, onDatePress }: Props) {
   const [unreadFriendRequests, setUnreadFriendRequests] = useState<number>(0);
   const [unreadRecommendations, setUnreadRecommendations] = useState<number>(0);
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
+
+  // Animation values
+  const notificationBadgeScale = useSharedValue(1);
+  const buttonPressedScale = useSharedValue(1);
 
   // language context
   const { t } = useLanguage();
@@ -188,52 +199,87 @@ export default function TopBar({ onDiamondPress, onDatePress }: Props) {
     getCurrentDate();
   }, []);
 
+  // Animated styles
+  const badgeAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: notificationBadgeScale.value }],
+    };
+  });
+
+  const buttonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: buttonPressedScale.value }],
+    };
+  });
+
   const totalUnread =
     unreadNotifications + unreadFriendRequests + unreadRecommendations;
 
+
   return (
-    <View style={styles.container}>
-      <Pressable style={styles.date} onPress={onDatePress}>
-        <CustomText
-          style={styles.dateMonth}
-          color="#1E3A5F"
-          type="bold"
-          fontSize={24}
+    <View style={styles.outerContainer}>
+      <View style={styles.container}>
+        <TouchableOpacity 
+          style={styles.dateContainer} 
+          onPress={onDatePress}
+          activeOpacity={0.7}
         >
-          {dateMonth} {dateDay}
-        </CustomText>
-        <CustomText
-          style={styles.dateDay}
-          color="#1E3A5F"
-          type="medium"
-          fontSize={16}
-        >
-          {dateDayName}
-        </CustomText>
-      </Pressable>
-      <View style={styles.topMenu}>
-        <TouchableOpacity
-          style={styles.topMenuItem}
-          onPress={handleNotificationsPress}
-        >
-          <NotificationIcon size={24} color="#f8f8f8" variant="fill" />
+          <CustomText
+            style={styles.dateMonth}
+            color="#1E3A5F"
+            type="bold"
+            fontSize={20}
+          >
+            {dateMonth} {dateDay}
+          </CustomText>
+          <CustomText
+            style={styles.dateDay}
+            color="#666"
+            type="medium"
+            fontSize={16}
+          >
+            {dateDayName}
+          </CustomText>
         </TouchableOpacity>
-        {totalUnread > 0 && (
-          <View style={styles.notificationsDot}>
-            <CustomText color="#1E3A5F" type="medium" fontSize={12}>
-              {totalUnread}
-            </CustomText>
-          </View>
-        )}
-        <TouchableOpacity style={styles.topMenuItem} onPress={onDiamondPress}>
-          <SparklesIcon size={24} color="#f8f8f8" variant="fill" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.topMenuItem}
-          onPress={handleProfileModals}
-        >
-          <MenuIcon size={24} color="#f8f8f8" />
-        </TouchableOpacity>
+        
+        <View style={styles.actionButtons}>
+          <Animated.View style={buttonAnimatedStyle}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleNotificationsPress}
+              activeOpacity={0.7}
+            >
+              <NotificationIcon size={22} color="#1E3A5F" variant="fill" />
+              {totalUnread > 0 && (
+                <Animated.View style={[styles.notificationBadge, badgeAnimatedStyle]}>
+                  <CustomText color="#fff" type="medium" fontSize={10}>
+                    {totalUnread}
+                  </CustomText>
+                </Animated.View>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+          
+          <Animated.View style={buttonAnimatedStyle}>
+            <TouchableOpacity 
+              style={styles.iconButton} 
+              onPress={onDiamondPress}
+              activeOpacity={0.7}
+            >
+              <SparklesIcon size={22} color="#1E3A5F" variant="fill" />
+            </TouchableOpacity>
+          </Animated.View>
+          
+          <Animated.View style={buttonAnimatedStyle}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleProfileModals}
+              activeOpacity={0.7}
+            >
+              <MenuIcon size={22} color="#1E3A5F" />
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       </View>
       <ProfileModal
         isModalVisible={isProfileModalVisible}
@@ -245,77 +291,52 @@ export default function TopBar({ onDiamondPress, onDatePress }: Props) {
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    paddingTop: Platform.OS === 'ios' ? StatusBar.currentHeight : 0,
+    width: '100%',
+  },
   container: {
-    display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#1E3A5F",
-    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#E8EFF5",
     width: "100%",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginHorizontal: 20,
-    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#999",
   },
-  date: {
-    display: "flex",
+  dateContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-around",
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: 4,
-    backgroundColor: "#f8f8f8",
   },
   dateMonth: {
-    marginRight: 16,
+    marginRight: 6,
   },
   dateDay: {
-    color: "#1E3A5F",
-    opacity: 0.6,
-    fontSize: 16,
-    fontWeight: 400,
-    marginRight: 16,
+    opacity: 0.8,
   },
-  dateYear: {
-    color: "#1E3A5F",
-    fontSize: 16,
-    fontWeight: "400",
-    marginRight: 10,
-  },
-  topMenu: {
-    display: "flex",
+  actionButtons: {
     flexDirection: "row",
-  },
-  topMenuItem: {
-    display: "flex",
-    flexDirection: "column",
     alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
   },
-  topMenuItemText: {
-    color: "#1E3A5F",
-    fontSize: 8,
-    fontWeight: "regular",
-    marginTop: 6,
+  iconButton: {
+    padding: 8,
+    marginLeft: 8,
+    position: "relative",
   },
-  notificationsDot: {
-    display: "flex",
+  notificationBadge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#FF5A5F",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
     justifyContent: "center",
     alignItems: "center",
-    position: "absolute",
-    top: -4,
-    right: 84,
-    width: 16,
-    height: 16,
-    borderRadius: 20,
-    backgroundColor: "#FFA38F",
-  },
-  notificationsDotText: {
-    color: "#1E3A5F",
-    fontSize: 10,
-    fontWeight: "bold",
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: "#f8f8f8",
   },
 });
