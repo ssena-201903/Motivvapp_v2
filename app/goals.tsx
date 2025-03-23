@@ -1,4 +1,4 @@
-import React, { useState, useEffect, act } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { CustomText } from "@/CustomText";
 import AddGoalModal from "@/components/modals/AddGoalModal";
@@ -18,57 +18,37 @@ import SectionHeader from "@/components/headers/SectionHeader";
 import MovieIcon from "@/components/icons/MovieIcon";
 import BookIcon from "@/components/icons/BookIcon";
 import ActivityIcon from "@/components/icons/ActivityIcon";
-import CarIcon from "@/components/icons/TravelIcon";
-import SellIcon from "@/components/icons/SellIcon";
+import PlaneIcon from "@/components/icons/PlaneIcon";
 import WalletIcon from "@/components/icons/ShoppingIcon";
 import FoodIcon from "@/components/icons/FoodIcon";
 import PlusIcon from "@/components/icons/PlusIcon";
 
 import { useLanguage } from "@/app/LanguageContext";
 import SearchMovie from "@/components/SearchMovie";
-import TravelIcon from "@/components/icons/TravelIcon";
-import PlaneIcon from "@/components/icons/PlaneIcon";
 
 const { width } = Dimensions.get("window");
-const containerWidth = width > 768 ? width - 900 : width - 40;
-const buttonWidth = containerWidth / 6 - 4; // divide by number of buttons
 
 export default function Goals() {
   const { categoryId = "Movie" } = useLocalSearchParams();
-  const [activeCategory, setActiveCategory] = useState<string>(
-    categoryId as string
-  );
+  const [activeCategory, setActiveCategory] = useState(categoryId as string);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [goals, setGoals] = useState<any[]>([]);
-  const [percentDone, setPercentDone] = useState(0);
 
   // language context
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
 
   const categories = [
-    { id: "Movie", label: t("home.cardGoalWatch") },
-    { id: "Book", label: t("home.cardGoalRead") },
-    { id: "Activity", label: t("home.cardGoalTry") },
-    { id: "Place", label: t("home.cardGoalGo") },
-    { id: "Buy", label: t("home.cardGoalBuy") },
-    { id: "Food", label: t("home.cardGoalEat") },
+    { id: "Movie", label: t("home.cardGoalWatch"), icon: MovieIcon },
+    { id: "Book", label: t("home.cardGoalRead"), icon: BookIcon },
+    { id: "Activity", label: t("home.cardGoalTry"), icon: ActivityIcon },
+    { id: "Place", label: t("home.cardGoalGo"), icon: PlaneIcon },
+    { id: "Buy", label: t("home.cardGoalBuy"), icon: WalletIcon },
+    { id: "Food", label: t("home.cardGoalEat"), icon: FoodIcon },
   ];
 
   const getSectionHeaderText = () => {
-    switch (activeCategory) {
-      case "Movie":
-        return t("home.cardGoalWatch");
-      case "Book":
-        return t("home.cardGoalRead");
-      case "Activity":
-        return t("home.cardGoalTry");
-      case "Place":
-        return t("home.cardGoalGo");
-      case "Buy":
-        return t("home.cardGoalBuy");
-      case "Food":
-        return t("home.cardGoalEat");
-    }
+    const category = categories.find(cat => cat.id === activeCategory);
+    return category?.label || "";
   };
 
   // fetch goals
@@ -98,17 +78,13 @@ export default function Goals() {
     fetchGoals();
   }, [activeCategory]);
 
-  const handleCategoryPress = (categoryId: string) => {
-    setActiveCategory(categoryId);
-  };
-
   // toggle modal
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
   };
 
   // handle goal add
-  const handleGoalAdd = async (data: any) => {
+  const handleGoalAdd = async () => {
     await fetchGoals(); // update list after adding a new goal
   };
 
@@ -121,68 +97,56 @@ export default function Goals() {
     return Math.round((completedGoals / totalGoals) * 100);
   };
 
-  const backgroundImage = require("@/assets/images/habitCardBg.png")
+  const renderIcon = (categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    if (!category) return null;
+    
+    const IconComponent = category.icon;
+    const isActive = activeCategory === categoryId;
+    
+    return (
+      <IconComponent 
+        size={16} 
+        color={isActive ? "#1E3A5F" : "#C6C6C6"} 
+        variant={isActive ? "fill" : "fill"} 
+      />
+    );
+  };
+
+  const backgroundImage = require("@/assets/images/habitCardBg.png");
 
   return (
     <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
       <View style={styles.container}>
+        {/* Category Buttons - Fixed Height */}
         <View style={styles.categoriesContainer}>
-          {categories.map((category) => (
-            <TouchableOpacity
-              style={[
-                styles.button,
-                activeCategory === category.id ? styles.activeButton : {},
-              ]}
-              onPress={() => handleCategoryPress(category.id)}
-              key={category.id}
-            >
-              {category.id === "Movie" && (
-                <MovieIcon
-                  size={18}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
-                  variant={activeCategory === category.id ? "fill" : "fill"}
-                />
-              )}
-              {category.id === "Book" && (
-                <BookIcon
-                  size={18}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
-                />
-              )}
-              {category.id === "Activity" && (
-                <ActivityIcon
-                  size={18}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
-                />
-              )}
-              {category.id === "Place" && (
-                <PlaneIcon
-                  size={18}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
-                />
-              )}
-              {category.id === "Buy" && (
-                <WalletIcon
-                  size={18}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
-                />
-              )}
-              {category.id === "Food" && (
-                <FoodIcon
-                  size={18}
-                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
-                />
-              )}
-              <CustomText
-                type={activeCategory === category.id ? "bold" : "regular"}
-                fontSize={10}
-                color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.categoriesScrollContent}
+          >
+            {categories.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                style={[
+                  styles.categoryPill,
+                  activeCategory === category.id && styles.activeCategoryPill
+                ]}
+                onPress={() => setActiveCategory(category.id)}
               >
-                {category.label}
-              </CustomText>
-            </TouchableOpacity>
-          ))}
+                {renderIcon(category.id)}
+                <CustomText
+                  type={activeCategory === category.id ? "bold" : "regular"}
+                  fontSize={10}
+                  color={activeCategory === category.id ? "#1E3A5F" : "#C6C6C6"}
+                >
+                  {category.label}
+                </CustomText>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
+        
         <View style={styles.contentBody}>
           {/* search movie  */}
           {activeCategory === "Movie" && (
@@ -192,7 +156,7 @@ export default function Goals() {
           <View style={styles.headerContainer}>
             <SectionHeader
               id={activeCategory}
-              text={getSectionHeaderText() ?? ""}
+              text={getSectionHeaderText()}
               percentDone={calculatePercentDone(activeCategory)}
               variant="other"
             />
@@ -244,6 +208,9 @@ export default function Goals() {
   );
 }
 
+// const { width } = Dimensions.get("window");
+const containerWidth = width > 768 ? width - 900 : width - 40;
+
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
@@ -259,46 +226,39 @@ const styles = StyleSheet.create({
     backgroundColor: "#FCFCFC",
   },
   categoriesContainer: {
-    display: "flex",
-    flexWrap: "wrap",
-    flexDirection: "row",
-    justifyContent: "flex-start",
     width: containerWidth,
-    paddingVertical: 5,
-    marginHorizontal: 20,
-    gap: 4,
-    height: 60, // fixed height without flexGrow
-    marginBottom: 20, // fixed marginBottom without flexGrow
-  },
-  button: {
-    width: buttonWidth,
     height: 60,
-    justifyContent: "center",
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  categoriesScrollContent: {
+    paddingHorizontal: 5,
+    height: 60,
+    gap: 6,
     alignItems: "center",
-    marginBottom: 5,
+  },
+  categoryPill: {
+    flexDirection: "row",
+    height: 40,
+    // width: 100,
+    alignItems: "center",
+    paddingHorizontal: 16,
+    borderRadius: 20,
     backgroundColor: "#FDFDFD",
-    borderRadius: 8,
     borderWidth: 1,
     borderColor: "#E8EFF5",
-    gap: 6,
-    // shadowColor: "#000",
-    // shadowOffset: {
-    //   width: 0,
-    //   height: 1,
-    // },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 2,
-    // elevation: 2,
+    gap: 8,
+    marginRight: 6,
+  },
+  activeCategoryPill: {
+    backgroundColor: "#E8EFF5",
+    borderColor: "#CEDEEB",
   },
   buttonText: {
     alignItems: "center",
     color: "#1E3A5F",
     opacity: 0.6,
     fontSize: 12,
-  },
-  activeButton: {
-    backgroundColor: "#E8EFF5",
-    borderColor: "#CEDEEB",
   },
   headerContainer: {
     width: "100%",
@@ -343,6 +303,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 20,
     right: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
   },
   noGoalsText: {
     opacity: 0.7,

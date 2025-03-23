@@ -6,6 +6,7 @@ import * as Localization from "expo-localization"; // Cihaz dilini almak için
 import tr from "@/languages/tr";
 import en from "@/languages/en";
 
+// LanguageContext.tsx
 type BaseTranslations = {
   login: {
     title: string;
@@ -18,6 +19,18 @@ type BaseTranslations = {
     loginButtonText: string;
     dontHaveAccount: string;
     registerLinkText: string;
+  };
+  pageTitle: { // Yeni eklenen kısım
+    goals: string;
+    habits: string;
+    profile: string;
+    notifications: string;
+    friends: string;
+    messages: string;
+    recommendations: string;
+    settings: string;
+    goBackToLogin: string;
+    memories: string;
   };
 };
 
