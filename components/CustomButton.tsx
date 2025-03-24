@@ -1,3 +1,4 @@
+import { CustomText } from "@/CustomText";
 import {
   TouchableOpacity,
   Text,
@@ -59,17 +60,19 @@ export default function CustomButton({
       ]}
       disabled={variant === "disabled"}
     >
-      <Text
+      <CustomText
+        type="medium"
+        color={variant === "outlined" ? "#FFA38F" : "white"}
+        fontSize={Platform.OS === "web" ? 14 : 12}
         style={[
           styles.text,
           variant === "disabled" && styles.disabledText,
           variant === "outlined" && styles.outlinedText,
           variant === "cancel" && styles.cancelText,
-          { fontSize: Platform.OS === "web" ? 16 : 14 },
         ]}
       >
         {label}
-      </Text>
+      </CustomText>
     </TouchableOpacity>
   );
 }
@@ -84,9 +87,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   text: {
-    fontWeight: "400",
     textAlign: "center",
-    color: "white",
   },
   fill: {
     backgroundColor: "#1E3A5F",

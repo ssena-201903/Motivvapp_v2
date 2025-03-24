@@ -2,29 +2,32 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
   Dimensions,
   Platform,
+  ScrollView,
   Image,
   ImageBackground,
   Keyboard,
+  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase.config";
 import CustomButton from "@/components/CustomButton";
-import InputField from "@/components/cards/InputField";
 import { CustomText } from "@/CustomText";
-
+import InputField from "@/components/cards/InputField";
 import { useLanguage } from "../LanguageContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import InputPicker from "@/components/cards/InputPicker";
+import * as Haptics from 'expo-haptics';
+import { showMessage } from "react-native-flash-message";
 
 const { width, height } = Dimensions.get("window");
 
 export default function Register() {
-  const [step, setStep] = useState(1);
+  // States
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
@@ -32,20 +35,25 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-
-  // language context
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(1));
+  const [progressValue] = useState(new Animated.Value(0.33));
+  
+  // Hooks
+  const router = useRouter();
   const { t, language, setLanguage } = useLanguage();
   const [selectedLanguage, setSelectedLanguage] = useState(language);
 
-  // handle change language
-  const handleChangeLanguage = async (lang: string) => {
-    setSelectedLanguage(lang);
-    await setLanguage(lang); // update context
-    await AsyncStorage.setItem("userLanguage", lang); //save to AsyncStorage
-  };
+  // Validations
+  const [nameValid, setNameValid] = useState(false);
+  const [nicknameValid, setNicknameValid] = useState(false);
+  const [emailValid, setEmailValid] = useState(false);
+  const [passwordValid, setPasswordValid] = useState(false);
+  const [confirmPasswordValid, setConfirmPasswordValid] = useState(false);
 
+  // Handle keyboard visibility
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       "keyboardDidShow",
@@ -62,14 +70,133 @@ export default function Register() {
     };
   }, []);
 
+  // Handle language change
+  const handleChangeLanguage = async (lang: string) => {
+    setSelectedLanguage(lang);
+    await setLanguage(lang);
+    await AsyncStorage.setItem("userLanguage", lang);
+    
+    // Haptic feedback for language change
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  // Validate inputs
+  const validateName = (value: string) => {
+    const isValid = value.length >= 2;
+    setNameValid(isValid);
+    return isValid;
+  };
+
+  const validateNickname = (value: string) => {
+    const isValid = value.length >= 2;
+    setNicknameValid(isValid);
+    return isValid;
+  };
+
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(value);
+    setEmailValid(isValid);
+    return isValid;
+  };
+
+  const validatePassword = (value: string) => {
+    const isValid = value.length >= 6;
+    setPasswordValid(isValid);
+    return isValid;
+  };
+
+  const validateConfirmPassword = (value: string) => {
+    const isValid = value === password;
+    setConfirmPasswordValid(isValid);
+    return isValid;
+  };
+
+  // Animation for step transitions
+  const animateTransition = (nextStep: number) => {
+    setIsAnimating(true);
+    
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true
+      }),
+      Animated.timing(progressValue, {
+        toValue: nextStep * 0.33,
+        duration: 300,
+        useNativeDriver: false
+      })
+    ]).start(() => {
+      setCurrentStep(nextStep);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true
+      }).start(() => {
+        setIsAnimating(false);
+      });
+    });
+    
+    // Haptic feedback for step transition
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  // Handle next step
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
+    if (currentStep === 1) {
+      if (!name || !nickname) {
+        setError(t("alerts.alertFillTheFields"));
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        return;
+      }
+      if (!nameValid || !nicknameValid) {
+        setError(t("register.invalidFields"));
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        return;
+      }
+    } else if (currentStep === 2) {
+      if (!email) {
+        setError(t("register.fillAllFields"));
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        return;
+      }
+      if (!emailValid) {
+        setError(t("alerts.alertInvalidEmail"));
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        return;
+      }
+    }
+    
+    setError("");
+    if (currentStep < 3 && !isAnimating) {
+      const nextStep = currentStep + 1;
+      animateTransition(nextStep);
+    }
   };
 
+  // Handle back step
   const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+    setError("");
+    if (currentStep > 1 && !isAnimating) {
+      const prevStep = currentStep - 1;
+      animateTransition(prevStep);
+    }
   };
 
+  // Format name with capitalization
   const capitalizeName = (name: string) => {
     return name
       .split(" ")
@@ -77,14 +204,29 @@ export default function Register() {
       .join(" ");
   };
 
+  // Register user
   const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+    if (!password || !confirmPassword) {
+      setError(t("register.fillAllFields"));
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       return;
     }
-
-    if (!name || !nickname || !email || !password || !confirmPassword) {
-      setError("Please fill in all fields");
+    
+    if (!passwordValid) {
+      setError(t("register.alertPasswordLength"));
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setError(t("alerts.alertPasswordsDoNotMatch"));
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       return;
     }
 
@@ -105,7 +247,7 @@ export default function Register() {
         email,
         nickname,
         lastSignedIn: new Date().toISOString().split("T")[0],
-        language: "en",
+        language: selectedLanguage || "en",
       });
 
       const collections = ["goals", "habits", "memories", "todos", "friends"];
@@ -113,187 +255,247 @@ export default function Register() {
         await setDoc(doc(userRef, collection, "placeholder"), {});
       }
 
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      
       router.replace("/createHabitCard");
     } catch (error: any) {
-      setError("Registration failed: " + error.message);
+      setError(t("register.registrationFailed") + ": " + error.message);
+      showMessage({ message: error.message, type: "danger" });
+      setLoading(false);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
     }
   };
 
-  const backgroundImage = require("@/assets/images/habitCardBg.png")
+  const backgroundImage = require("@/assets/images/habitCardBg.png");
+
+  // Progress indicator
+  const renderProgressIndicator = () => {
+    return (
+      <View style={styles.progressContainer}>
+        <Animated.View 
+          style={[
+            styles.progressBar, 
+            { width: progressValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0%', '100%']
+              }) 
+            }
+          ]} 
+        />
+        <View style={styles.progressSteps}>
+          <View style={[styles.stepCircle, currentStep >= 1 && styles.activeStepCircle]}>
+            <Text style={[styles.stepText, currentStep >= 1 && styles.activeStepText]}>1</Text>
+          </View>
+          <View style={[styles.stepCircle, currentStep >= 2 && styles.activeStepCircle]}>
+            <Text style={[styles.stepText, currentStep >= 2 && styles.activeStepText]}>2</Text>
+          </View>
+          <View style={[styles.stepCircle, currentStep >= 3 && styles.activeStepCircle]}>
+            <Text style={[styles.stepText, currentStep >= 3 && styles.activeStepText]}>3</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
 
   return (
-    <ImageBackground
-      source={backgroundImage}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
-      <View style={styles.pageContainer}>
-        <View style={styles.container}>
-          <View style={styles.headerContainer}>
-            <CustomText style={styles.title} type="bold">
-              {t("register.title")}
-            </CustomText>
-            <CustomText style={styles.subtitle} type="medium">
-              {step}/3
-            </CustomText>
-          </View>
+    <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Brand Logo */}
+        <View style={styles.brandContainer}>
+          <Image
+            source={require("@/assets/images/brandName2.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          {/* <CustomText style={styles.logoText}>from Lotustech</CustomText> */}
+        </View>
 
-          {error && <Text style={styles.error}>{error}</Text>}
-
-          {step === 1 && (
-            <View style={styles.formContainer}>
-              <View style={styles.formItem}>
-                <InputField
-                  label={t("register.name")}
-                  placeholder={t("register.namePlaceholder")}
-                  value={name}
-                  onChangeText={setName}
-                  variant="name"
-                />
-              </View>
-              <View style={styles.formItem}>
-                <InputField
-                  label={t("register.nickname")}
-                  placeholder={t("register.nicknamePlaceholder")}
-                  value={nickname}
-                  onChangeText={setNickname}
-                  variant="nickname"
-                />
-              </View>
-            </View>
-          )}
-
-          {step === 2 && (
-            <View style={styles.formContainer}>
-              <View style={styles.formItem}>
-                <InputField
-                  label={t("register.email")}
-                  placeholder={t("register.emailPlaceholder")}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  variant="email"
-                />
-              </View>
-            </View>
-          )}
-
-          {step === 3 && (
-            <View style={styles.formContainer}>
-              <View style={styles.formItem}>
-                <InputField
-                  label={t("register.password")}
-                  placeholder={t("register.passwordPlaceholder")}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={true}
-                  isPasswordField={true}
-                  errorMessage={error}
-                  inputStyle={{
-                    width: "100%",
-                  }}
-                  variant="password"
-                />
-              </View>
-              <View style={styles.formItem}>
-                <InputField
-                  label={t("register.confirmPassword")}
-                  placeholder={t("register.confirmPasswordPlaceholder")}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={true}
-                  isPasswordField={true}
-                  errorMessage={error}
-                  inputStyle={{
-                    width: "100%",
-                  }}
-                  variant="password"
-                />
-              </View>
-            </View>
-          )}
-
-          <View style={styles.buttonRow}>
-            {step === 1 && (
-              <CustomButton
-                label={t("register.backToLoginButtonText")}
-                onPress={() => router.push("/login")}
-                variant="cancel"
-                width="50%"
-                height={50}
-              />
-            )}
-            {step > 1 && (
-              <CustomButton
-                label={t("register.backButtonText")}
-                onPress={handleBack}
-                variant="cancel"
-                width="50%"
-                height={50}
-              />
-            )}
-            {step < 3 && (
-              <CustomButton
-                label={t("register.nextButtonText")}
-                onPress={handleNext}
-                variant="fill"
-                width="50%"
-                height={50}
-                marginLeft={10}
-              />
-            )}
-            {step === 3 && (
-              <CustomButton
-                label={
-                  loading
-                    ? t("register.isCreatingAccount")
-                    : t("register.registerButtonText")
-                }
-                onPress={handleRegister}
-                variant="fill"
-                width="50%"
-                height={50}
-                marginLeft={10}
-              />
-            )}
+        {/* Language Selector */}
+        <View style={styles.languageContainer}>
+          <View style={styles.languageToggle}>
+            <TouchableOpacity 
+              style={[
+                styles.languageButton, 
+                selectedLanguage === "en" && styles.activeLanguage
+              ]}
+              onPress={() => handleChangeLanguage("en")}
+            >
+              <Text style={[
+                styles.languageText,
+                selectedLanguage === "en" && styles.activeLanguageText
+              ]}>EN</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.languageButton, 
+                selectedLanguage === "tr" && styles.activeLanguage
+              ]}
+              onPress={() => handleChangeLanguage("tr")}
+            >
+              <Text style={[
+                styles.languageText,
+                selectedLanguage === "tr" && styles.activeLanguageText
+              ]}>TR</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {!isKeyboardVisible && Platform.OS !== "web" && (
-          <View style={styles.dashboardContainer}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("@/assets/images/brandName2.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <CustomText style={styles.logoText}>from Lotustech</CustomText>
+        <View style={styles.container}>
+          <View style={styles.formCard}>
+            <View style={styles.headerContainer}>
+              <CustomText
+                style={styles.title}
+                type="bold"
+              >
+                {t("register.title")}
+              </CustomText>
+              {renderProgressIndicator()}
             </View>
-            {/* <View style={styles.logoSloganContainer}>
-                      <CustomText style={styles.logoSlogan}>
-                        fun way to motivation
-                      </CustomText>
-                    </View> */}
-          </View>
-        )}
-        {Platform.OS === "web" && (
-          <View style={styles.dashboardContainer}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("@/assets/images/brandName2.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <CustomText style={styles.logoText}>from Lotustech</CustomText>
+
+            {error ? (
+              <Animated.View 
+                style={[styles.errorContainer, { opacity: fadeAnim }]}
+              >
+                <Text style={styles.error}>{error}</Text>
+              </Animated.View>
+            ) : null}
+
+            <Animated.View style={[styles.formContainer, { opacity: fadeAnim }]}>
+              {currentStep === 1 && (
+                <>
+                  <View style={styles.formItem}>
+                    <InputField
+                      label={t("register.name")}
+                      placeholder={t("register.namePlaceholder")}
+                      value={name}
+                      onChangeText={(text) => {
+                        setName(text);
+                        validateName(text);
+                      }}
+                      variant="name"
+                    />
+                  </View>
+                  <View style={styles.formItem}>
+                    <InputField
+                      label={t("register.nickname")}
+                      placeholder={t("register.nicknamePlaceholder")}
+                      value={nickname}
+                      onChangeText={(text) => {
+                        setNickname(text);
+                        validateNickname(text);
+                      }}
+                      variant="nickname"
+                    />
+                  </View>
+                </>
+              )}
+
+              {currentStep === 2 && (
+                <View style={styles.formItem}>
+                  <InputField
+                    label={t("register.email")}
+                    placeholder={t("register.emailPlaceholder")}
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      validateEmail(text);
+                    }}
+                    keyboardType="email-address"
+                    variant="email"
+                  />
+                </View>
+              )}
+
+              {currentStep === 3 && (
+                <>
+                  <View style={styles.formItem}>
+                    <InputField
+                      label={t("register.password")}
+                      placeholder={t("register.passwordPlaceholder")}
+                      value={password}
+                      onChangeText={(text) => {
+                        setPassword(text);
+                        validatePassword(text);
+                        if (confirmPassword) {
+                          validateConfirmPassword(confirmPassword);
+                        }
+                      }}
+                      secureTextEntry={true}
+                      isPasswordField={true}
+                      variant="password"
+                    />
+                  </View>
+                  <View style={styles.formItem}>
+                    <InputField
+                      label={t("register.confirmPassword")}
+                      placeholder={t("register.confirmPasswordPlaceholder")}
+                      value={confirmPassword}
+                      onChangeText={(text) => {
+                        setConfirmPassword(text);
+                        validateConfirmPassword(text);
+                      }}
+                      secureTextEntry={true}
+                      isPasswordField={true}
+                      variant="password"
+                    />
+                  </View>
+                </>
+              )}
+            </Animated.View>
+
+            <View style={styles.buttonContainer}>
+              <View style={styles.buttonRow}>
+                {currentStep === 1 ? (
+                  <CustomButton
+                    label={t("register.backToLoginButtonText")}
+                    onPress={() => router.push("/login")}
+                    variant="cancel"
+                    width="48%"
+                    height={50}
+                  />
+                ) : (
+                  <CustomButton
+                    label={t("register.backButtonText")}
+                    onPress={handleBack}
+                    variant="cancel"
+                    width="48%"
+                    height={50}
+                  />
+                )}
+                
+                {currentStep < 3 ? (
+                  <CustomButton
+                    label={t("register.nextButtonText")}
+                    onPress={handleNext}
+                    variant="fill"
+                    width="48%"
+                    height={50}
+                  />
+                ) : (
+                  <CustomButton
+                    label={
+                      loading
+                        ? t("register.isCreatingAccount")
+                        : t("register.registerButtonText")
+                    }
+                    onPress={handleRegister}
+                    variant="fill"
+                    width="48%"
+                    height={50}
+                  />
+                )}
+              </View>
             </View>
-            {/* <View style={styles.logoSloganContainer}>
-                      <CustomText style={styles.logoSlogan}>
-                        fun way to motivation
-                      </CustomText>
-                    </View> */}
           </View>
-        )}
-      </View>
+        </View>
+      </ScrollView>
     </ImageBackground>
   );
 }
@@ -304,29 +506,17 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  pageContainer: {
-    flex: 1,
-    alignItems: "center",
-    // backgroundColor: "#FCFCFC",
-    position: "relative",
+  scrollContainer: {
+    flexGrow: 1,
     paddingBottom: Platform.OS === "web" ? 0 : 40,
-    justifyContent: Platform.OS === "web" ? "center" : "flex-end",
-  },
-  container: {
-    width: "100%",
-    maxWidth: 480,
-    paddingHorizontal: 30,
-    alignItems: "center",
-  },
-  dashboardContainer: {
-    position: "absolute",
-    alignItems: "flex-start",
-    top: 10,
-    left: Platform.OS === "web" ? 30 : "auto",
-  },
-  logoContainer: {
-    flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  brandContainer: {
+    position: "absolute",
+    top: 30,
+    left: 30,
     alignItems: "center",
   },
   logo: {
@@ -340,62 +530,136 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     marginTop: -15,
   },
-  logoSloganContainer: {
-    marginTop: 20,
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "flex-start",
-    width: 200,
+  languageContainer: {
+    position: "absolute",
+    top: 30,
+    right: 30,
+    zIndex: 10,
   },
-  logoSlogan: {
-    fontSize: Platform.OS === "web" ? 16 : width * 0.04,
+  languageToggle: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  languageButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activeLanguage: {
+    backgroundColor: "#1E3A5F",
+  },
+  languageText: {
+    fontSize: 14,
+    fontWeight: "500",
     color: "#1E3A5F",
-    // opacity: 0.8,
-    fontWeight: "600",
+  },
+  activeLanguageText: {
+    color: "#FFFFFF",
+  },
+  container: {
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  formCard: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 16,
+    padding: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
   },
   headerContainer: {
-    marginBottom: 40,
-    alignItems: "center",
     width: "100%",
+    alignItems: "center",
+    marginBottom: 30,
   },
   title: {
-    fontSize: Platform.OS === "web" ? 32 : width * 0.08,
-    fontWeight: "bold",
-    color: "#1E3A5F",
-    marginBottom: 10,
+    fontSize: Platform.OS === "web" ? 28 : width * 0.07,
+    marginBottom: 15,
     textAlign: "center",
-  },
-  subtitle: {
-    fontSize: Platform.OS === "web" ? 16 : width * 0.04,
     color: "#1E3A5F",
-    opacity: 0.8,
-    textAlign: "center",
   },
-  formContainer: {
+  progressContainer: {
     width: "100%",
-    marginBottom: 40,
+    height: 6,
+    backgroundColor: "#E8EFF5",
+    borderRadius: 3,
+    marginTop: 10,
+    marginBottom: 5,
+    position: "relative",
   },
-  formItem: {
-    marginBottom: 20,
+  progressBar: {
+    height: 6,
+    backgroundColor: "#FF6B6B",
+    borderRadius: 3,
+    position: "absolute",
+    left: 0,
+    top: 0,
   },
-  buttonRow: {
+  progressSteps: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "80%",
+    position: "absolute",
+    width: "100%",
+    top: -6,
+  },
+  stepCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderWidth: 2,
+    borderColor: "#E8EFF5",
     alignItems: "center",
-    marginTop: 20,
+    justifyContent: "center",
   },
-  linkButton: {
-    paddingVertical: 10,
+  activeStepCircle: {
+    backgroundColor: "#FF6B6B",
+    borderColor: "#FF6B6B",
   },
-  linkButtonText: {
-    color: "#1E3A5F",
-    fontSize: 16,
+  stepText: {
+    fontSize: 10,
     fontWeight: "bold",
+    color: "#DBDADA",
+  },
+  activeStepText: {
+    color: "#FFFFFF",
+  },
+  errorContainer: {
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 20,
+    width: "100%",
   },
   error: {
     color: "red",
     textAlign: "center",
-    marginBottom: 10,
+  },
+  formContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  formItem: {
+    width: "100%",
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   },
 });

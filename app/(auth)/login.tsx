@@ -17,34 +17,26 @@ import { useRouter } from "expo-router";
 import CustomButton from "@/components/CustomButton";
 import { CustomText } from "@/CustomText";
 import InputField from "@/components/cards/InputField";
-import LottieView from "lottie-react-native";
-// language context
 import { useLanguage } from "../LanguageContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import InputPicker from "@/components/cards/InputPicker";
+import * as Haptics from "expo-haptics";
 
 const { width, height } = Dimensions.get("window");
 
 export default function Login() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [emailFocus, setEmailFocus] = useState<boolean>(false);
-  const [passwordFocus, setPasswordFocus] = useState<boolean>(false);
-  const router = useRouter();
+  // States
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  // language context
+  // Hooks
+  const router = useRouter();
   const { t, language, setLanguage } = useLanguage();
   const [selectedLanguage, setSelectedLanguage] = useState(language);
 
-  // handle change language
-  const handleChangeLanguage = async (lang: string) => {
-    setSelectedLanguage(lang);
-    await setLanguage(lang); // update context
-    await AsyncStorage.setItem("userLanguage", lang); //save to AsyncStorage
-  };
-
+  // Handle keyboard visibility
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       "keyboardDidShow",
@@ -61,12 +53,42 @@ export default function Login() {
     };
   }, []);
 
+  // Handle change language
+  const handleChangeLanguage = async (lang: string) => {
+    setSelectedLanguage(lang);
+    await setLanguage(lang);
+    await AsyncStorage.setItem("userLanguage", lang);
+
+    // Haptic feedback for language change
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
   const handleLogin = async () => {
+    if (!email || !password) {
+      setError(t("alerts.alertFillTheFields"));
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       router.replace("/home");
     } catch (error) {
-      setError("could not login, invalid email or password");
+      setError(t("login.invalidCredentials"));
+      setLoading(false);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
     }
   };
 
@@ -74,7 +96,7 @@ export default function Login() {
     router.push("/emailVerification");
   };
 
-  const backgroundImage = require("@/assets/images/habitCardBg.png")
+  const backgroundImage = require("@/assets/images/habitCardBg.png");
 
   return (
     <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
@@ -82,130 +104,127 @@ export default function Login() {
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.container}>
-          <View style={styles.headerContainer}>
-            <CustomText
-              style={styles.title}
-              type="bold"
-              color="#1E3A5F"
-              fontSize={24}
-            >
-              {t("login.title")}
-            </CustomText>
-            <CustomText style={styles.subtitle} type="medium" color="#1E3A5F">
-              {t("login.subTitle")}
-            </CustomText>
-          </View>
+        {/* Brand Logo */}
+        <View style={styles.brandContainer}>
+          <Image
+            source={require("@/assets/images/brandName2.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          {/* <CustomText style={styles.logoText}>from Lotustech</CustomText> */}
+        </View>
 
-          {error && <Text style={styles.error}>{error}</Text>}
-
-          <View style={styles.formContainer}>
-            <View style={styles.formItem}>
-              <InputField
-                label={t("login.email")}
-                placeholder={t("login.emailPlaceholder")}
-                value={email}
-                onChangeText={setEmail}
-                secureTextEntry={false}
-                errorMessage={error}
-                inputStyle={{
-                  borderColor: emailFocus ? "#1E3A5F" : "#E5EEFF",
-                  width: "100%",
-                }}
-                variant="email"
-              />
-            </View>
-
-            <View style={styles.formItem}>
-              <InputField
-                label={t("login.password")}
-                placeholder={t("login.passwordPlaceholder")}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={true}
-                isPasswordField={true}
-                errorMessage={error}
-                inputStyle={{
-                  borderColor: passwordFocus ? "#1E3A5F" : "#E5EEFF",
-                  width: "100%",
-                }}
-                variant="password"
-              />
-            </View>
-
+        {/* Language Selector */}
+        <View style={styles.languageContainer}>
+          <View style={styles.languageToggle}>
             <TouchableOpacity
-              style={styles.forgotPassword}
-              onPress={handleForgotPassword}
+              style={[
+                styles.languageButton,
+                selectedLanguage === "en" && styles.activeLanguage,
+              ]}
+              onPress={() => handleChangeLanguage("en")}
             >
-              <CustomText type="regular" color="#666" fontSize={12}>
-                {t("login.forgotPassword")}
+              <CustomText
+                fontSize={14}
+                type="semibold"
+                color="#1E3A5F"
+                style={[selectedLanguage === "en" && styles.activeLanguageText]}
+              >
+                EN
               </CustomText>
             </TouchableOpacity>
-
-            <View style={styles.buttonContainer}>
-              <CustomButton
-                label={t("login.loginButtonText")}
-                onPress={handleLogin}
-                variant="fill"
-                width="80%"
-                height={50}
-              />
-              <TouchableOpacity
-                style={styles.registerLink}
-                onPress={() => router.push("/register")}
+            <TouchableOpacity
+              style={[
+                styles.languageButton,
+                selectedLanguage === "tr" && styles.activeLanguage,
+              ]}
+              onPress={() => handleChangeLanguage("tr")}
+            >
+              <CustomText
+                fontSize={14}
+                type="semibold"
+                color="#1E3A5F"
+                style={[selectedLanguage === "tr" && styles.activeLanguageText]}
               >
-                <CustomText type="regular" color="#1E3A5F" fontSize={14}>
-                  {t("login.dontHaveAccount")}{" "}
-                  <CustomText type="bold" color="#1E3A5F" fontSize={14}>
-                    {t("login.registerLinkText")}
-                  </CustomText>
-                </CustomText>
-              </TouchableOpacity>
-            </View>
+                TR
+              </CustomText>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {!isKeyboardVisible && Platform.OS !== "web" && (
-          <View style={styles.dashboardContainer}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("@/assets/images/brandName2.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <CustomText style={styles.logoText}>from Lotustech</CustomText>
-            </View>
-            {/* <View style={styles.logoSloganContainer}>
-              <CustomText style={styles.logoSlogan}>
-                fun way to motivation
+        <View style={styles.container}>
+          <View style={styles.formCard}>
+            <View style={styles.headerContainer}>
+              <CustomText style={styles.title} type="bold">
+                {t("login.title")}
               </CustomText>
-            </View> */}
-          </View>
-        )}
-        {Platform.OS === "web" && (
-          <View style={styles.dashboardContainer}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("@/assets/images/brandName2.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <CustomText style={styles.logoText}>from Lotustech</CustomText>
+              <CustomText style={styles.subtitle} type="medium">
+                {t("login.subTitle")}
+              </CustomText>
+            </View>
+
+            {error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.error}>{error}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.formContainer}>
+              <View style={styles.formItem}>
+                <InputField
+                  label={t("login.email")}
+                  placeholder={t("login.emailPlaceholder")}
+                  value={email}
+                  onChangeText={setEmail}
+                  secureTextEntry={false}
+                  keyboardType="email-address"
+                  variant="email"
+                />
+              </View>
+
+              <View style={styles.formItem}>
+                <InputField
+                  label={t("login.password")}
+                  placeholder={t("login.passwordPlaceholder")}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={true}
+                  isPasswordField={true}
+                  variant="password"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={styles.forgotPassword}
+                onPress={handleForgotPassword}
+              >
+                <CustomText type="regular" color="#1E3A5F" fontSize={12}>
+                  {t("login.forgotPassword")}
+                </CustomText>
+              </TouchableOpacity>
+
+              <View style={styles.buttonContainer}>
+                <CustomButton
+                  label={t("login.loginButtonText")}
+                  onPress={handleLogin}
+                  variant="fill"
+                  width="100%"
+                  height={50}
+                />
+                <TouchableOpacity
+                  style={styles.registerLink}
+                  onPress={() => router.push("/register")}
+                >
+                  <CustomText type="regular" color="#1E3A5F" fontSize={14}>
+                    {t("login.dontHaveAccount")}{" "}
+                    <CustomText type="bold" color="#1E3A5F" fontSize={14}>
+                      {t("login.registerLinkText")}
+                    </CustomText>
+                  </CustomText>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        )}
-        <View style={styles.lamguageContainer}>
-          <CustomText style={styles.selectLanguageText}>
-            {t("login.selectLanguage")}
-          </CustomText>
-          <InputPicker
-            selectedValue={selectedLanguage}
-            onValueChange={handleChangeLanguage}
-            items={[
-              { label: "✅ English", value: "en" },
-              { label: "✅ Türkçe", value: "tr" },
-            ]}
-          />
         </View>
       </ScrollView>
     </ImageBackground>
@@ -221,20 +240,14 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: Platform.OS === "web" ? 0 : 40,
-    justifyContent: Platform.OS === "web" ? "center" : "flex-end",
-    alignItems: "center",
-    // backgroundColor: "#FCFCFC",
-    position: "relative",
-  },
-  dashboardContainer: {
-    position: "absolute",
-    alignItems: "flex-start",
-    top: 10,
-    left: Platform.OS === "web" ? 30 : "auto",
-  },
-  logoContainer: {
-    flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  brandContainer: {
+    position: "absolute",
+    top: 30,
+    left: 30,
     alignItems: "center",
   },
   logo: {
@@ -248,39 +261,73 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     marginTop: -15,
   },
-  logoSloganContainer: {
-    marginTop: 20,
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "flex-start",
-    width: 200,
+  languageContainer: {
+    position: "absolute",
+    top: 30,
+    right: 30,
+    zIndex: 10,
   },
-  logoSlogan: {
-    fontSize: Platform.OS === "web" ? 16 : width * 0.04,
-    color: "#1E3A5F",
-    // opacity: 0.8,
-    fontWeight: "600",
+  languageToggle: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  languageButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activeLanguage: {
+    backgroundColor: "#1E3A5F",
+  },
+  activeLanguageText: {
+    color: "#FFFFFF",
   },
   container: {
     width: "100%",
-    maxWidth: 480,
-    paddingHorizontal: 30,
+    maxWidth: 400,
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+  },
+  formCard: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 16,
+    padding: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
   },
   headerContainer: {
     width: "100%",
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 30,
   },
   title: {
-    fontSize: Platform.OS === "web" ? 32 : width * 0.08,
+    fontSize: Platform.OS === "web" ? 28 : width * 0.07,
     marginBottom: 10,
     textAlign: "center",
+    color: "#1E3A5F",
   },
   subtitle: {
-    fontSize: Platform.OS === "web" ? 16 : width * 0.04,
+    fontSize: Platform.OS === "web" ? 14 : width * 0.035,
+    color: "#1E3A5F",
     opacity: 0.8,
+    textAlign: "center",
+  },
+  errorContainer: {
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 20,
+    width: "100%",
+  },
+  error: {
+    color: "red",
     textAlign: "center",
   },
   formContainer: {
@@ -289,45 +336,19 @@ const styles = StyleSheet.create({
   },
   formItem: {
     width: "100%",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   buttonContainer: {
     width: "100%",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 40,
   },
   forgotPassword: {
     alignSelf: "flex-end",
-    marginBottom: 20,
+    // marginTop: 5,
   },
   registerLink: {
     marginTop: 20,
     alignItems: "center",
-  },
-  error: {
-    color: "red",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  patternBackground: {
-    alignItems: "center",
-    flex: 1,
-  },
-  animation: {
-    width: 50,
-    height: 50,
-    position: "absolute",
-  },
-  lamguageContainer: {
-    position: "absolute",
-    right: 30,
-    top: 20,
-    width: 130,
-  },
-  selectLanguageText: {
-    fontSize: Platform.OS === "web" ? 14 : width * 0.035,
-    color: "#1E3A5F",
-    fontWeight: "600",
-    marginBottom: 10,
   },
 });

@@ -1,20 +1,22 @@
-import { CustomText } from "@/CustomText";
-import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   View,
-  Text,
   TextInput,
+  Text,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
   Platform,
 } from "react-native";
+
+// Import your custom icons
 import EyeIcon from "../icons/EyeIcon";
 import MailIcon from "../icons/MailIcon";
 import LockIcon from "../icons/LockIcon";
 import PersonIcon from "../icons/PersonIcon";
 import PeopleIcon from "../icons/PeopleIcon";
+import { CustomText } from "@/CustomText";
+import PencilIcon from "../icons/PencilIcon";
 
 const { width } = Dimensions.get("window");
 
@@ -33,9 +35,11 @@ type Props = {
   containerStyle?: any;
   keyboardType?: "default" | "numeric" | "email-address" | "phone-pad";
   variant?: "default" | "password" | "email" | "edit" | "name" | "nickname";
+  maxLength?: number;
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
 };
 
-export default function InputField({
+export default function ModernInputField({
   label,
   description,
   placeholder,
@@ -50,16 +54,10 @@ export default function InputField({
   containerStyle,
   keyboardType = "default",
   variant = "default",
+  maxLength,
+  autoCapitalize = "none",
 }: Props) {
   const [isSecure, setIsSecure] = useState(secureTextEntry || false);
-  const hasIcon =
-    variant === "password" ||
-    variant === "email" ||
-    variant === "name" ||
-    variant === "nickname";
-
-  const paddingNoIcon = variant === "default" ? 0 : 40;
-
   const [isFocused, setIsFocused] = useState(false);
 
   const toggleSecureEntry = () => {
@@ -72,82 +70,86 @@ export default function InputField({
     }
   };
 
+  // Determine icon based on variant
+  const renderIcon = () => {
+    const iconColor = "#1E3A5F";
+    
+    if (variant === "password") {
+      return <LockIcon size={18} color={iconColor} />;
+    } else if (variant === "email") {
+      return <MailIcon size={18} color={iconColor} />;
+    } else if (variant === "name") {
+      return <PersonIcon size={18} color={iconColor} />;
+    } else if (variant === "nickname") {
+      return <PeopleIcon size={18} color={iconColor} variant="fill" />;
+    }
+    return null;
+  };
+
+  // Determine styles based on error state
+  const getBorderColor = () => {
+    return errorMessage ? "#FF6B6B" : "#E5EEFF";
+  };
+
   return (
     <View
       style={[
         styles.container,
         containerStyle,
-        !isEditable && { opacity: 0.5 },
-        { width: "100%" },
+        !isEditable && { opacity: 0.7 },
       ]}
       pointerEvents={isEditable ? "auto" : "none"}
     >
       {label && (
-        <CustomText style={styles.label} type="semibold" color="#1E3A5F">
+        <CustomText 
+          fontSize={14}
+          style={styles.label}
+          color="#1E3A5F"
+          type="semibold"
+        >
           {label}
         </CustomText>
       )}
+      
       {description && (
         <CustomText style={styles.description}>{description}</CustomText>
       )}
+
       <View
         style={[
           styles.inputContainer,
-          errorMessage ? styles.errorInput : {},
-          { width: "100%" },
-          isFocused ? styles.focusedInput : {}, // Focus durumunda border değiştir
+          {
+            borderColor: getBorderColor(),
+          },
         ]}
       >
-        {variant === "password" && (
-          <TouchableOpacity style={styles.iconLeft} onPress={toggleSecureEntry}>
-            <LockIcon size={18} color="#1E3A5F" />
-          </TouchableOpacity>
+        {renderIcon() && (
+          <View style={styles.iconLeft}>
+            {renderIcon()}
+          </View>
         )}
-        {variant === "email" && (
-          <TouchableOpacity style={styles.iconLeft} onPress={toggleSecureEntry}>
-            <MailIcon size={18} color="#1E3A5F" />
-          </TouchableOpacity>
-        )}
-        {variant === "name" && (
-          <TouchableOpacity style={styles.iconLeft} onPress={toggleSecureEntry}>
-            <PersonIcon size={18} color="#1E3A5F" />
-          </TouchableOpacity>
-        )}
-        {variant === "nickname" && (
-          <TouchableOpacity style={styles.iconLeft} onPress={toggleSecureEntry}>
-            <PeopleIcon size={18} color="#1E3A5F" />
-          </TouchableOpacity>
-        )}
+
         <TextInput
           style={[
             styles.input,
             {
-              borderWidth: 0,
-              paddingLeft: variant === "default" ? 10 : paddingNoIcon,
-              paddingRight: variant === "default" ? 10 : paddingNoIcon,
+              paddingLeft: variant !== "default" ? 44 : 16,
+              paddingRight: (variant === "password" || variant === "edit") ? 44 : 16,
+              // color: isEditable ? "#1E3A5F" : "rgba(30, 58, 95, 0.6)",
             },
-            Platform.select({
-              ios: { fontWeight: "400" },
-              android: { fontWeight: "400" },
-              web: { fontWeight: "400" },
-            }),
-            inputStyle,
-            !hasIcon && { marginLeft: 6 },
-            !isEditable && styles.disabledInput,
-            {
-              width: "100%",
-              fontSize: Platform.OS === "web" ? 16 : width * 0.04,
-            },
+            // inputStyle,
           ]}
           placeholder={placeholder}
-          placeholderTextColor="#999"
+          placeholderTextColor="rgba(30, 58, 95, 0.4)"
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={isPasswordField && isSecure}
           keyboardType={keyboardType}
-          editable={isEditable && variant !== "edit"}
+          editable={isEditable}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          maxLength={maxLength}
+          autoCapitalize={autoCapitalize}
         />
 
         {variant === "password" && (
@@ -157,22 +159,26 @@ export default function InputField({
           >
             <EyeIcon
               size={18}
-              color="#1E3A5F"
+              color="#666"
               variant={isSecure ? "off" : "on"}
             />
           </TouchableOpacity>
         )}
+
         {variant === "edit" && (
           <TouchableOpacity
             style={styles.iconRight}
             onPress={isEditable ? handleSavePress : undefined}
           >
-            <Ionicons name="pencil" size={18} color="#666" />
+            <PencilIcon size={18} color="#1E3A5F" />
           </TouchableOpacity>
         )}
       </View>
+
       {errorMessage ? (
-        <Text style={styles.errorText}>{errorMessage}</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        </View>
       ) : null}
     </View>
   );
@@ -180,64 +186,59 @@ export default function InputField({
 
 const styles = StyleSheet.create({
   container: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
+    width: "100%",
+    marginVertical: 8,
     maxWidth: 500,
     alignSelf: "center",
   },
   label: {
-    fontSize: Platform.OS === "web" ? 14 : width * 0.035,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   description: {
     fontSize: Platform.OS === "web" ? 12 : width * 0.03,
-    color: "#666",
-    marginBottom: 10,
-  },
-  focusedInput: {
-    borderColor: "#1E3A5F",
-    borderWidth: 1,
+    color: "rgba(30, 58, 95, 0.6)",
+    marginBottom: 8,
   },
   inputContainer: {
-    position: "relative",
-    borderRadius: 8,
-    backgroundColor: "#F5F8FF",
-    borderWidth: 1,
-    borderColor: "#E5EEFF",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E8EFF5",
     flexDirection: "row",
     alignItems: "center",
-    maxWidth: 500,
-    alignSelf: "center",
+    height: 50,
+    overflow: "hidden",
+    // shadowColor: "#1E3A5F",
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.05,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
   input: {
     flex: 1,
-    paddingVertical: 14,
+    height: "100%",
+    fontSize: Platform.OS === "web" ? 16 : width * 0.04,
     color: "#1E3A5F",
-    fontWeight: "500",
-    borderRadius: 8,
+    fontWeight: "400",
   },
   iconLeft: {
     position: "absolute",
-    left: 14,
-    color: "#1E3A5F",
-    opacity: 0.5,
+    left: 16,
+    justifyContent: "center",
+    alignItems: "center",
   },
   iconRight: {
     position: "absolute",
-    right: 14,
-    color: "#1E3A5F",
-    opacity: 0.5,
+    right: 16,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  errorInput: {
-    borderColor: "#FF6B6B",
+  errorContainer: {
+    marginTop: 6,
   },
   errorText: {
     fontSize: Platform.OS === "web" ? 12 : width * 0.03,
     color: "#FF6B6B",
-    marginTop: 4,
-  },
-  disabledInput: {
-    color: "#999",
+    fontWeight: "500",
   },
 });
